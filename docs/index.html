@@ -48,6 +48,7 @@ button { font:inherit; font-size:14px; padding:4px 10px; border-radius:6px; bord
 <section id="destek-direnc">
   <h2>UK · Otomatik Destek / Direnç</h2>
   <p>BIST hisseleri için otomatik destek ve direnç bölgeleri: son 6 ayın tepe ve dipleri ATR&#x27;ye göre kümelenir, en az 2 kez test edilmiş en yakın 3 destek ve 3 direnç kutu olarak çizilir. Tabloda uzaklık, ödül/risk, 6 ay zirve/dip; kırılım alarmı.</p>
+  <p><img src="img/destek-direnc.jpg" alt="UK · Otomatik Destek / Direnç göstergesi BIST günlük grafikte" width="700" height="550" loading="lazy"></p>
   <p><a href="https://github.com/igumutkilicbalikesir/bist-tradingview-gostergeleri/blob/main/scripts/destek-direnc.pine">GitHub'da aç</a> · <a href="https://github.com/igumutkilicbalikesir/bist-tradingview-gostergeleri/raw/main/scripts/destek-direnc.pine">Ham kod (Raw)</a>
      · <button onclick="kopyala('destek-direnc')">Kodu kopyala</button></p>
   <details><summary>Pine Script kodunu göster</summary><pre><code id="kod-destek-direnc">//@version=6
@@ -291,6 +292,7 @@ if barstate.islast
 <section id="trend-yonu">
   <h2>UK · Trend Yönü</h2>
   <p>7 ölçütlü trend puanı (EMA dizilimi, 200 EMA, 50 EMA eğimi, tepe-dip yapısı, SuperTrend, ADX/DMI, haftalık trend): YÜKSELEN / DÜŞEN / YATAY, trendin süresi ve değişim alarmları.</p>
+  <p><img src="img/trend-yonu.jpg" alt="UK · Trend Yönü göstergesi BIST günlük grafikte" width="700" height="550" loading="lazy"></p>
   <p><a href="https://github.com/igumutkilicbalikesir/bist-tradingview-gostergeleri/blob/main/scripts/trend-yonu.pine">GitHub'da aç</a> · <a href="https://github.com/igumutkilicbalikesir/bist-tradingview-gostergeleri/raw/main/scripts/trend-yonu.pine">Ham kod (Raw)</a>
      · <button onclick="kopyala('trend-yonu')">Kodu kopyala</button></p>
   <details><summary>Pine Script kodunu göster</summary><pre><code id="kod-trend-yonu">//@version=6
@@ -451,6 +453,7 @@ if barstate.islast and iTable
 <section id="guven-skoru-sirket-olaylari">
   <h2>UK · Güven Skoru + Şirket Olayları</h2>
   <p>9 faktörlü 0–100 orta vade güven skoru (trend, momentum, XU100&#x27;e göre güç, RSI, oynaklık, zirveden uzaklık, para akışı, HBK, haber) ve grafikte bilanço, temettü, bölünme/bedelsiz ve haber işaretleri. BIST hacmi BIST_DLY akışından alınır.</p>
+  <p><img src="img/guven-skoru-sirket-olaylari.jpg" alt="UK · Güven Skoru + Şirket Olayları göstergesi BIST günlük grafikte" width="700" height="550" loading="lazy"></p>
   <p><a href="https://github.com/igumutkilicbalikesir/bist-tradingview-gostergeleri/blob/main/scripts/guven-skoru-sirket-olaylari.pine">GitHub'da aç</a> · <a href="https://github.com/igumutkilicbalikesir/bist-tradingview-gostergeleri/raw/main/scripts/guven-skoru-sirket-olaylari.pine">Ham kod (Raw)</a>
      · <button onclick="kopyala('guven-skoru-sirket-olaylari')">Kodu kopyala</button></p>
   <details><summary>Pine Script kodunu göster</summary><pre><code id="kod-guven-skoru-sirket-olaylari">//@version=6

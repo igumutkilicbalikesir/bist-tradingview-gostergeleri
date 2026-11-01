@@ -19,6 +19,15 @@ Hazırlayan: **Instagram [@umutkilicbalikesir](https://www.instagram.com/umutkil
 | **UK · Trend Yönü** | 7 ölçütle (EMA dizilimi, 200 EMA, 50 EMA eğimi, tepe-dip yapısı, SuperTrend, ADX/DMI, haftalık trend) puan verir: YÜKSELEN / DÜŞEN / YATAY. Trendin kaç mumdur sürdüğünü gösterir, değişimde alarm. | [`scripts/trend-yonu.pine`](scripts/trend-yonu.pine) |
 | **UK · Güven Skoru + Şirket Olayları** | 9 faktörlü 0–100 orta vade skoru (trend, momentum, XU100'e göre güç, RSI, oynaklık, zirveden uzaklık, para akışı, HBK kârlılığı, haber). Grafikte bilanço (B), temettü (T), bölünme/bedelsiz (S) ve kendi girdiğin haber (H) işaretleri; olay sonrası fiyat ve hacim tepkisi. | [`scripts/guven-skoru-sirket-olaylari.pine`](scripts/guven-skoru-sirket-olaylari.pine) |
 
+### UK · Otomatik Destek / Direnç
+![Otomatik Destek / Direnç göstergesi BRSAN günlük grafikte](docs/img/destek-direnc.jpg)
+
+### UK · Trend Yönü
+![Trend Yönü göstergesi BRSAN günlük grafikte](docs/img/trend-yonu.jpg)
+
+### UK · Güven Skoru + Şirket Olayları
+![Güven Skoru göstergesi BRSAN günlük grafikte](docs/img/guven-skoru-sirket-olaylari.jpg)
+
 ## Kurulum (TradingView, ücretsiz hesap yeterli)
 
 1. TradingView'de bir grafik aç (ör. `BIST:ASELS`, günlük).
