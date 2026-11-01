@@ -1,0 +1,318 @@
+//@version=6
+// UK · Güven Skoru (orta vade, 6 ay) + Şirket Olayları
+// Skor 0–100 arasıdır ve dokuz faktörün ağırlıklı ortalamasıdır. Hepsi GÜNLÜK veriden hesaplanır,
+// bu yüzden hangi zaman diliminde bakarsanız bakın aynı skoru görürsünüz.
+//   1 Trend yapısı      fiyat ve 50 günlük ortalama, 200 günlük ortalamanın üstünde mi, 50G yükseliyor mu
+//   2 Momentum          6 ve 3 aylık getiri
+//   3 Endekse göre güç  6 aylık getiri eksi kıyas endeksinin 6 aylık getirisi
+//   4 RSI dengesi       45–65 arası en iyi; aşırı alım ve aşırı satım puan düşürür
+//   5 Oynaklık          yıllık oynaklık düştükçe puan artar
+//   6 Zirveden uzaklık  6 aylık zirveye yakınlık
+//   7 Para akışı        son 3 ayda yükselen günlerin hacmi / toplam hacim
+//   8 Kârlılık          son 4 çeyrek HBK toplamı pozitif mi, bir yıl öncesine göre büyüyor mu
+//   9 Haber etkisi      son 6 ayda listeye girdiğiniz haberlerin net etkisi
+// Verisi olmayan faktör (ör. kısa geçmiş, bilanço verisi yok) hesaba katılmaz, kalan ağırlıklar yeniden dağıtılır.
+//
+// Olaylar: bilanço (B), temettü (T), bölünme/bedelsiz (S) TradingView verisinden otomatik gelir.
+// Haberler (H) "Haber listesi" kutusuna girilir; Pine Script KAP veya haber akışına erişemez.
+// Her olayın üstüne gelince, olaydan sonraki N mumdaki fiyat tepkisi ve hacim artışı görünür.
+// Hazırlayan: Instagram @umutkilicbalikesir
+indicator("UK · Güven Skoru + Şirket Olayları", shorttitle = "UK Güven", overlay = true, max_labels_count = 500)
+
+// ── Ayarlar ──
+G0 = "Kıyas"
+iIdx = input.symbol("BIST:XU100", "Kıyas endeksi", group = G0)
+iVolP = input.string("BIST_DLY:", "BIST hacim öneki", group = G0, tooltip = "BIST: akışında hacim yok; hacim 15 dk gecikmeli BIST_DLY: akışından alınır. Boş bırakılırsa grafiğin kendi hacmi kullanılır.")
+
+G1 = "Ağırlıklar"
+wTrend = input.int(20, "Trend yapısı", minval = 0, maxval = 50, group = G1)
+wMom   = input.int(10, "Momentum (3–6 ay)", minval = 0, maxval = 50, group = G1)
+wRel   = input.int(15, "Endekse göre güç", minval = 0, maxval = 50, group = G1)
+wRsi   = input.int(10, "RSI dengesi", minval = 0, maxval = 50, group = G1)
+wVol   = input.int(10, "Oynaklık", minval = 0, maxval = 50, group = G1)
+wDd    = input.int(10, "Zirveden uzaklık", minval = 0, maxval = 50, group = G1)
+wFlow  = input.int(10, "Para akışı", minval = 0, maxval = 50, group = G1)
+wEps   = input.int(10, "Kârlılık (HBK)", minval = 0, maxval = 50, group = G1)
+wNews  = input.int(5, "Haber etkisi", minval = 0, maxval = 50, group = G1)
+
+G2 = "Olaylar"
+iShowEarn = input.bool(true, "Bilançolar (B)", group = G2)
+iShowDiv  = input.bool(true, "Temettüler (T)", group = G2)
+iShowSpl  = input.bool(true, "Bölünme / bedelsiz (S)", group = G2)
+iShowNews = input.bool(true, "Haberler (H)", group = G2)
+iNewsTxt  = input.bool(false, "Haber başlığını grafiğe yaz", group = G2)
+iReact    = input.int(5, "Tepki ölçümü (mum)", minval = 1, maxval = 30, group = G2, tooltip = "Olaydan önceki kapanışa göre kaç mum sonraki fiyat değişimi ve hacim ölçülsün.")
+iNews     = input.text_area("", "Haber listesi", group = G2, tooltip = "Her satıra bir haber:\nHİSSE | TARİH | ETKİ | BAŞLIK\n\nTarih: 2026-10-15 ya da 15.10.2026\nEtki: + olumlu, - olumsuz, 0 nötr\nHİSSE yerine * yazarsanız her grafikte görünür.\n\nÖrnek:\nASELS | 15.10.2026 | + | Yeni ihracat sözleşmesi\nKLSER | 2026-10-30 | - | Sermaye artırımı ertelendi\n\nTüm hisselerin haberlerini tek listede tutabilirsiniz; her grafikte yalnızca o hisseninkiler görünür.")
+
+G3 = "Görünüm"
+iTable = input.bool(true, "Skor tablosu", group = G3)
+iTPos  = input.string("Sağ üst", "Tablo konumu", options = ["Sağ üst", "Sağ alt", "Sol üst", "Sol alt"], group = G3)
+iTSize = input.string("Küçük", "Tablo yazı boyutu", options = ["Çok küçük", "Küçük", "Normal"], group = G3)
+
+// ── Yardımcılar ──
+lin(float x, float x0, float x1) =>
+    na(x) ? float(na) : math.max(0.0, math.min(100.0, (x - x0) / (x1 - x0) * 100.0))
+
+pct(float x) =>
+    na(x) ? "–" : "%" + (x >= 0 ? "+" : "") + str.tostring(x, "#.#")
+
+// Taban sıfıra yakınken oluşan dev oranları okunur tutar
+pctK(float x) =>
+    na(x) ? "–" : math.abs(x) > 999 ? (x > 0 ? ">%+999" : "<%−999") : pct(x)
+
+kategori(float s) =>
+    na(s) ? "–" : s >= 70 ? "YÜKSEK" : s >= 55 ? "İYİ" : s >= 40 ? "ORTA" : s >= 25 ? "ZAYIF" : "DÜŞÜK"
+
+// ── Günlük veriden faktör girdileri ──
+gunluk() =>
+    s50   = ta.sma(close, 50)
+    s200  = ta.sma(close, 200)
+    slope = (s50 - s50[20]) / ta.atr(14)
+    r126  = (close / close[126] - 1) * 100
+    r63   = (close / close[63] - 1) * 100
+    rsi   = ta.rsi(close, 14)
+    vola  = ta.stdev(math.log(close / close[1]), 126) * math.sqrt(252) * 100
+    dd    = (close / ta.highest(high, 126) - 1) * 100
+    [close, s50, s200, slope, r126, r63, rsi, vola, dd]
+
+// Para akışı hacim gerektirir; BIST'te hacim yalnız BIST_DLY: akışında var
+akis() =>
+    v   = nz(volume)                                    // tek bir boş hacim günü 63 günlük toplamı boşaltmasın
+    upv = math.sum(close > close[1] ? v : 0.0, 63)
+    dnv = math.sum(close < close[1] ? v : 0.0, 63)
+    upv + dnv > 0 ? upv / (upv + dnv) : float(na)
+
+volSym = str.startswith(syminfo.prefix, "BIST") and iVolP != "" ? iVolP + syminfo.ticker : syminfo.tickerid   // BIST, BISTMIXED vb.
+
+[dC, d50, d200, dSlope, d126, d63, dRsi, dVola, dDd] = request.security(syminfo.tickerid, "D", gunluk())
+dFlow = request.security(volSym, "D", akis(), ignore_invalid_symbol = true)
+vol   = request.security(volSym, timeframe.period, volume, ignore_invalid_symbol = true)
+iR126 = request.security(iIdx, "D", (close / close[126] - 1) * 100, ignore_invalid_symbol = true)
+
+// ── Faktör puanları (0–100) ──
+float sTrend = na
+if not na(d200)
+    sTrend := (dC > d200 ? 40.0 : 0.0) + (d50 > d200 ? 30.0 : 0.0) + (dSlope > 0 ? 30.0 : 0.0)
+else if not na(d50)
+    sTrend := (dC > d50 ? 50.0 : 0.0) + (dSlope > 0 ? 50.0 : 0.0)
+
+m1   = lin(d126, -30, 40)
+m2   = lin(d63, -20, 25)
+sMom = na(m1) ? m2 : na(m2) ? m1 : (m1 + m2) / 2
+
+rel  = d126 - iR126
+sRel = lin(rel, -30, 30)
+
+float sRsi = na
+if not na(dRsi)
+    sRsi := dRsi < 45 ? lin(dRsi, 25, 45) : dRsi > 65 ? lin(dRsi, 85, 65) : 100.0
+
+sVol  = lin(dVola, 90, 25)
+sDd   = lin(dDd, -50, 0)
+sFlow = lin(dFlow, 0.35, 0.65)
+
+// ── Kârlılık: açıklanan çeyreklik HBK geçmişi ──
+eAct = request.earnings(syminfo.tickerid, earnings.actual, barmerge.gaps_on, ignore_invalid_symbol = true)
+eEst = request.earnings(syminfo.tickerid, earnings.estimate, barmerge.gaps_on, ignore_invalid_symbol = true)
+var epsHist = array.new<float>()
+if not na(eAct)
+    epsHist.push(eAct)
+
+float sEps   = na
+float epsSum = na
+float epsGr  = na
+nE = epsHist.size()
+if nE >= 4
+    epsSum := 0.0
+    for i = nE - 4 to nE - 1
+        epsSum += epsHist.get(i)
+    if nE >= 8
+        prev = 0.0
+        for i = nE - 8 to nE - 5
+            prev += epsHist.get(i)
+        epsGr := prev != 0 ? (epsSum - prev) / math.abs(prev) * 100 : na
+    else if nE >= 5
+        old = epsHist.get(nE - 5)
+        epsGr := old != 0 ? (epsHist.last() - old) / math.abs(old) * 100 : na
+    sEps := (epsSum > 0 ? 50.0 : 0.0) + (na(epsGr) ? 25.0 : lin(epsGr, -50, 50) / 2)
+else if nE >= 1
+    sEps := epsHist.last() > 0 ? 60.0 : 20.0
+
+// ── Haber listesini bir kez çözümle ──
+var nT   = array.new<int>()
+var nImp = array.new<int>()
+var nTxt = array.new<string>()
+if barstate.isfirst and str.length(iNews) > 0
+    satirlar = str.split(str.replace_all(iNews, "\r", ""), "\n")
+    for ln in satirlar
+        parts = str.split(ln, "|")
+        if parts.size() >= 4
+            tk = str.upper(str.replace_all(parts.get(0), " ", ""))
+            if str.contains(tk, ":")
+                tk := str.split(tk, ":").last()
+            if tk == "*" or tk == str.upper(syminfo.ticker)
+                ds = str.replace_all(parts.get(1), " ", "")
+                int y = na
+                int m = na
+                int d = na
+                if str.contains(ds, "-")
+                    p = str.split(ds, "-")
+                    if p.size() == 3
+                        y := int(str.tonumber(p.get(0)))
+                        m := int(str.tonumber(p.get(1)))
+                        d := int(str.tonumber(p.get(2)))
+                else if str.contains(ds, ".")
+                    p = str.split(ds, ".")
+                    if p.size() == 3
+                        d := int(str.tonumber(p.get(0)))
+                        m := int(str.tonumber(p.get(1)))
+                        y := int(str.tonumber(p.get(2)))
+                if not na(y) and not na(m) and not na(d)
+                    imp = str.replace_all(parts.get(2), " ", "")
+                    nT.push(timestamp(syminfo.timezone, y, m, d, 0, 0))
+                    nImp.push(imp == "+" ? 1 : imp == "-" ? -1 : 0)
+                    nTxt.push(parts.get(3))
+
+// ── Haber etkisi: son 6 aydaki haberlerin net yönü ──
+SIX_M = 182 * 86400000
+float sNews = na
+int newsCnt = 0
+int newsNet = 0
+if nT.size() > 0
+    for i = 0 to nT.size() - 1
+        t = nT.get(i)
+        if t <= time_close and t >= time - SIX_M
+            newsCnt += 1
+            newsNet += nImp.get(i)
+    if newsCnt > 0
+        sNews := lin(newsNet, -3, 3)
+
+// ── Ağırlıklı toplam ──
+scores  = array.from(sTrend, sMom, sRel, sRsi, sVol, sDd, sFlow, sEps, sNews)
+weights = array.from(wTrend, wMom, wRel, wRsi, wVol, wDd, wFlow, wEps, wNews)
+float tot = 0.0
+float wsum = 0.0
+for i = 0 to 8
+    s = scores.get(i)
+    w = weights.get(i)
+    if not na(s) and w > 0
+        tot += s * w
+        wsum += w
+score = wsum > 0 ? tot / wsum : float(na)
+
+plot(score, "Güven skoru", display = display.data_window)
+alertcondition(ta.crossover(score, 55), "Güven skoru 55 üstüne çıktı", "{{ticker}} güven skoru İYİ bölgesine geçti")
+alertcondition(ta.crossunder(score, 40), "Güven skoru 40 altına indi", "{{ticker}} güven skoru ZAYIF bölgesine indi")
+
+// ── Olay işaretleri ve tepki ölçümü ──
+volAvg    = ta.sma(vol, 20)
+reactVol  = ta.sma(vol, iReact + 1)
+prevClose = close[1]
+prevVol   = volAvg[1]
+prevTC    = time_close[1]
+
+var pLbl  = array.new<label>()
+var pBar  = array.new<int>()
+var pBase = array.new<float>()
+var pVol  = array.new<float>()
+var pTip  = array.new<string>()
+
+olay(string ch, color col, bool above, string tip, string txt) =>
+    lb = label.new(bar_index, above ? high : low, txt == "" ? ch : ch + " · " + txt, yloc = above ? yloc.abovebar : yloc.belowbar, style = above ? label.style_label_down : label.style_label_up, color = col, textcolor = color.white, size = size.small, tooltip = tip + "\n" + str.tostring(iReact) + " mumluk tepki ölçülüyor…")
+    pLbl.push(lb)
+    pBar.push(bar_index)
+    pBase.push(prevClose)
+    pVol.push(prevVol)
+    pTip.push(tip)
+
+tarih = str.format_time(time, "dd.MM.yyyy", syminfo.timezone)
+
+if iShowEarn and not na(eAct)
+    olay("B", #2962ff, false, "BİLANÇO · " + tarih + "\nHBK: " + str.tostring(eAct, "#.###") + (na(eEst) ? "" : "  ·  beklenti " + str.tostring(eEst, "#.###")), "")
+
+dv = request.dividends(syminfo.tickerid, dividends.gross, barmerge.gaps_on, ignore_invalid_symbol = true)
+if iShowDiv and not na(dv)
+    olay("T", #8e24aa, false, "TEMETTÜ · " + tarih + "\nHisse başı brüt: " + str.tostring(dv, "#.####"), "")
+
+spN = request.splits(syminfo.tickerid, splits.numerator, barmerge.gaps_on, ignore_invalid_symbol = true)
+spD = request.splits(syminfo.tickerid, splits.denominator, barmerge.gaps_on, ignore_invalid_symbol = true)
+if iShowSpl and not na(spN)
+    olay("S", #f57c00, false, "BÖLÜNME / BEDELSİZ · " + tarih + "\nOran: " + str.tostring(spD) + " → " + str.tostring(spN), "")
+
+if iShowNews and nT.size() > 0
+    for i = 0 to nT.size() - 1
+        t = nT.get(i)
+        if t <= time_close and t > prevTC
+            v   = nImp.get(i)
+            col = v > 0 ? #26a69a : v < 0 ? #ef5350 : #787b86
+            etk = v > 0 ? "Olumlu" : v < 0 ? "Olumsuz" : "Nötr"
+            bas = nTxt.get(i)
+            kisa = str.length(bas) > 40 ? str.substring(bas, 0, 40) + "…" : bas
+            olay("H", col, true, "HABER · " + str.format_time(t, "dd.MM.yyyy", syminfo.timezone) + " · " + etk + "\n" + bas, iNewsTxt ? kisa : "")
+
+// N mum dolduğunda tepkiyi etiketin açıklamasına yaz
+if pBar.size() > 0
+    for i = pBar.size() - 1 to 0
+        if bar_index - pBar.get(i) >= iReact
+            b0  = pBase.get(i)
+            v0  = pVol.get(i)
+            ret = b0 > 0 ? (close / b0 - 1) * 100 : float(na)
+            vr  = v0 > 0 ? reactVol / v0 : float(na)
+            pLbl.get(i).set_tooltip(pTip.get(i) + "\n" + str.tostring(iReact) + " mumluk fiyat tepkisi: " + pct(ret) + (na(vr) ? "" : "  ·  hacim " + str.tostring(vr, "#.#") + " kat"))
+            pLbl.remove(i)
+            pBar.remove(i)
+            pBase.remove(i)
+            pVol.remove(i)
+            pTip.remove(i)
+
+// ── Skor tablosu ──
+tPos = switch iTPos
+    "Sağ üst" => position.top_right
+    "Sağ alt" => position.bottom_right
+    "Sol alt" => position.bottom_left
+    => position.top_left
+tSz = switch iTSize
+    "Çok küçük" => size.tiny
+    "Normal"    => size.normal
+    => size.small
+var tb = table.new(tPos, 4, 13, border_width = 1, border_color = color.new(color.gray, 80), frame_color = color.new(color.gray, 60), frame_width = 1)
+
+var bool imzaHazir = false
+
+satir(int r, string ad, string deger, float s, int w) =>
+    fg = chart.fg_color
+    bg = chart.bg_color
+    sc = na(s) ? color.gray : color.from_gradient(s, 0, 100, #ef5350, #26a69a)
+    tb.cell(0, r, ad, text_color = fg, bgcolor = bg, text_halign = text.align_left, text_size = tSz)
+    tb.cell(1, r, deger, text_color = fg, bgcolor = bg, text_halign = text.align_left, text_size = tSz)
+    tb.cell(2, r, na(s) ? "veri yok" : str.tostring(math.round(s)), text_color = color.white, bgcolor = color.new(sc, 20), text_size = tSz)
+    tb.cell(3, r, str.tostring(w), text_color = fg, bgcolor = bg, text_size = tSz)
+
+if barstate.islast and iTable
+    fg = chart.fg_color
+    bg = chart.bg_color
+    tb.cell(0, 0, "Faktör (6 ay)", text_color = fg, bgcolor = bg, text_size = tSz)
+    tb.cell(1, 0, "Değer", text_color = fg, bgcolor = bg, text_size = tSz)
+    tb.cell(2, 0, "Puan", text_color = fg, bgcolor = bg, text_size = tSz)
+    tb.cell(3, 0, "Ağırlık", text_color = fg, bgcolor = bg, text_size = tSz)
+    satir(1, "Trend yapısı", na(d200) ? "200G ort. için veri az" : (dC > d200 ? "200G üstü" : "200G altı") + (d50 > d200 ? " · 50G > 200G" : " · 50G < 200G"), sTrend, wTrend)
+    satir(2, "Momentum", "6A " + pct(d126) + " · 3A " + pct(d63), sMom, wMom)
+    satir(3, "Endekse göre güç", pct(rel) + " (endeks " + pct(iR126) + ")", sRel, wRel)
+    satir(4, "RSI dengesi", "RSI " + str.tostring(dRsi, "#.#"), sRsi, wRsi)
+    satir(5, "Oynaklık", "yıllık %" + str.tostring(dVola, "#"), sVol, wVol)
+    satir(6, "Zirveden uzaklık", pct(dDd), sDd, wDd)
+    satir(7, "Para akışı", na(dFlow) ? "hacim yok" : "alış hacmi %" + str.tostring(dFlow * 100, "#"), sFlow, wFlow)
+    satir(8, "Kârlılık (HBK)", na(epsSum) ? (nE > 0 ? "son HBK " + str.tostring(epsHist.last(), "#.##") : "bilanço verisi yok") : "4Ç toplam " + str.tostring(epsSum, "#.##") + (na(epsGr) ? "" : " · yıllık " + pctK(epsGr)), sEps, wEps)
+    satir(9, "Haber etkisi", newsCnt > 0 ? str.tostring(newsCnt) + " haber · net " + (newsNet > 0 ? "+" : "") + str.tostring(newsNet) : "listede haber yok", sNews, wNews)
+    sc = na(score) ? color.gray : color.from_gradient(score, 0, 100, #ef5350, #26a69a)
+    tb.cell(0, 10, "GÜVEN SKORU", text_color = color.white, bgcolor = sc, text_size = size.normal)
+    tb.cell(1, 10, kategori(score), text_color = color.white, bgcolor = sc, text_size = size.normal)
+    tb.cell(2, 10, na(score) ? "–" : str.tostring(math.round(score)) + " / 100", text_color = color.white, bgcolor = sc, text_size = size.normal)
+    d20 = score - score[20]
+    tb.cell(3, 10, na(d20) ? "" : (d20 >= 0 ? "▲ +" : "▼ ") + str.tostring(d20, "#") + " / 20 mum", text_color = color.white, bgcolor = sc, text_size = tSz)
+    tb.cell(0, 11, "Orta vade teknik + temel özet · yatırım tavsiyesi değildir", text_color = color.gray, bgcolor = bg, text_size = size.tiny)
+    tb.cell(0, 12, "📸 Instagram · @umutkilicbalikesir", text_color = #E1306C, bgcolor = bg, text_size = tSz)
+    if not imzaHazir                                    // birleştirme yalnız bir kez (canlı mumda her tikte tekrar etmesin)
+        tb.merge_cells(0, 11, 3, 11)
+        tb.merge_cells(0, 12, 3, 12)
+        imzaHazir := true

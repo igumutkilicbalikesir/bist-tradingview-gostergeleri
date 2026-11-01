@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://igumutkilicbalikesir.github.io/bist-tradingview-gostergeleri/sitemap.xml

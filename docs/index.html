@@ -1,0 +1,790 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BIST TradingView Göstergeleri – Ücretsiz Pine Script (Destek Direnç, Trend, Güven Skoru)</title>
+<meta name="description" content="Borsa İstanbul hisseleri için 3 ücretsiz TradingView Pine Script göstergesi: otomatik destek/direnç, 7 ölçütlü trend yönü, 0–100 güven skoru ve bilanço/temettü işaretleri. Hazırlayan: Instagram @umutkilicbalikesir.">
+<meta name="keywords" content="BIST TradingView göstergesi, Pine Script BIST, Borsa İstanbul destek direnç, trend göstergesi, güven skoru, ücretsiz indikatör">
+<link rel="canonical" href="https://igumutkilicbalikesir.github.io/bist-tradingview-gostergeleri/">
+<meta property="og:title" content="BIST TradingView Göstergeleri (ücretsiz)">
+<meta property="og:description" content="Otomatik destek/direnç, trend yönü ve güven skoru – Pine Script v6, açık kaynak.">
+<meta property="og:image" content="https://igumutkilicbalikesir.github.io/bist-tradingview-gostergeleri/img/asels-ornek.jpg">
+<meta property="og:url" content="https://igumutkilicbalikesir.github.io/bist-tradingview-gostergeleri/">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">[{"@context": "https://schema.org", "@type": "SoftwareSourceCode", "name": "UK · Otomatik Destek / Direnç", "description": "BIST hisseleri için otomatik destek ve direnç bölgeleri: son 6 ayın tepe ve dipleri ATR'ye göre kümelenir, en az 2 kez test edilmiş en yakın 3 destek ve 3 direnç kutu olarak çizilir. Tabloda uzaklık, ödül/risk, 6 ay zirve/dip; kırılım alarmı.", "programmingLanguage": "Pine Script v6", "runtimePlatform": "TradingView", "license": "https://opensource.org/licenses/MIT", "codeRepository": "https://github.com/igumutkilicbalikesir/bist-tradingview-gostergeleri", "url": "https://igumutkilicbalikesir.github.io/bist-tradingview-gostergeleri/#destek-direnc", "isAccessibleForFree": true, "inLanguage": "tr", "author": {"@type": "Person", "name": "@umutkilicbalikesir", "sameAs": ["https://www.instagram.com/umutkilicbalikesir/"]}, "keywords": "BIST, Borsa İstanbul, TradingView, Pine Script, gösterge, indikatör"}, {"@context": "https://schema.org", "@type": "SoftwareSourceCode", "name": "UK · Trend Yönü", "description": "7 ölçütlü trend puanı (EMA dizilimi, 200 EMA, 50 EMA eğimi, tepe-dip yapısı, SuperTrend, ADX/DMI, haftalık trend): YÜKSELEN / DÜŞEN / YATAY, trendin süresi ve değişim alarmları.", "programmingLanguage": "Pine Script v6", "runtimePlatform": "TradingView", "license": "https://opensource.org/licenses/MIT", "codeRepository": "https://github.com/igumutkilicbalikesir/bist-tradingview-gostergeleri", "url": "https://igumutkilicbalikesir.github.io/bist-tradingview-gostergeleri/#trend-yonu", "isAccessibleForFree": true, "inLanguage": "tr", "author": {"@type": "Person", "name": "@umutkilicbalikesir", "sameAs": ["https://www.instagram.com/umutkilicbalikesir/"]}, "keywords": "BIST, Borsa İstanbul, TradingView, Pine Script, gösterge, indikatör"}, {"@context": "https://schema.org", "@type": "SoftwareSourceCode", "name": "UK · Güven Skoru + Şirket Olayları", "description": "9 faktörlü 0–100 orta vade güven skoru (trend, momentum, XU100'e göre güç, RSI, oynaklık, zirveden uzaklık, para akışı, HBK, haber) ve grafikte bilanço, temettü, bölünme/bedelsiz ve haber işaretleri. BIST hacmi BIST_DLY akışından alınır.", "programmingLanguage": "Pine Script v6", "runtimePlatform": "TradingView", "license": "https://opensource.org/licenses/MIT", "codeRepository": "https://github.com/igumutkilicbalikesir/bist-tradingview-gostergeleri", "url": "https://igumutkilicbalikesir.github.io/bist-tradingview-gostergeleri/#guven-skoru-sirket-olaylari", "isAccessibleForFree": true, "inLanguage": "tr", "author": {"@type": "Person", "name": "@umutkilicbalikesir", "sameAs": ["https://www.instagram.com/umutkilicbalikesir/"]}, "keywords": "BIST, Borsa İstanbul, TradingView, Pine Script, gösterge, indikatör"}, {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "BIST hisseleri için ücretsiz TradingView destek direnç göstergesi var mı?", "acceptedAnswer": {"@type": "Answer", "text": "Evet. 'UK · Otomatik Destek / Direnç' Pine Script göstergesi son 6 ayın tepe ve diplerinden destek ve direnç bölgelerini otomatik çizer. Ücretsiz ve açık kaynaktır."}}, {"@type": "Question", "name": "TradingView'de bir BIST hissesinin trendi yükselen mi düşen mi nasıl anlaşılır?", "acceptedAnswer": {"@type": "Answer", "text": "'UK · Trend Yönü' göstergesi 7 ölçütü +1/0/−1 puanlar ve sonucu YÜKSELEN, DÜŞEN veya YATAY olarak tabloda gösterir."}}, {"@type": "Question", "name": "TradingView'de BIST hisselerinde hacim neden görünmüyor?", "acceptedAnswer": {"@type": "Answer", "text": "BIST: ve BISTMIXED: akışlarında hacim verisi yoktur. Hacim 15 dakika gecikmeli BIST_DLY: akışında bulunur; 'UK · Güven Skoru' göstergesi hacmi otomatik olarak oradan alır."}}, {"@type": "Question", "name": "Bilanço, temettü ve bedelsiz tarihleri TradingView grafiğinde nasıl gösterilir?", "acceptedAnswer": {"@type": "Answer", "text": "'UK · Güven Skoru + Şirket Olayları' göstergesi bunları B, T ve S işaretleriyle gösterir ve olaydan sonraki fiyat ile hacim tepkisini ölçer."}}, {"@type": "Question", "name": "Bu göstergeler nasıl kurulur?", "acceptedAnswer": {"@type": "Answer", "text": "TradingView'de Pine Editor'ü aç, yeni gösterge oluştur, .pine dosyasının içeriğini yapıştır, Kaydet ve Grafiğe ekle."}}]}]</script>
+<style>
+:root { --bg:#ffffff; --fg:#1b1b1f; --mut:#5c5f66; --kod:#f4f5f7; --vurgu:#E1306C; --kenar:#e3e5e8; }
+@media (prefers-color-scheme: dark) { :root { --bg:#131722; --fg:#e6e8ec; --mut:#9aa0aa; --kod:#1e2230; --kenar:#2a2e39; } }
+body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.6 -apple-system, "Segoe UI", Roboto, sans-serif; }
+main { max-width:860px; margin:0 auto; padding:24px 16px 64px; }
+h1 { font-size:28px; line-height:1.25; margin:8px 0 4px; }
+h2 { font-size:21px; margin-top:40px; border-top:1px solid var(--kenar); padding-top:24px; }
+h3 { font-size:17px; margin-bottom:4px; }
+p, li { color:var(--fg); }
+.alt { color:var(--mut); }
+a { color:var(--vurgu); }
+img { max-width:100%; height:auto; border-radius:8px; border:1px solid var(--kenar); }
+pre { background:var(--kod); padding:12px; border-radius:8px; overflow-x:auto; font-size:12.5px; line-height:1.45; }
+button { font:inherit; font-size:14px; padding:4px 10px; border-radius:6px; border:1px solid var(--kenar); background:var(--kod); color:var(--fg); cursor:pointer; }
+.ig { display:inline-block; margin-top:8px; padding:8px 14px; border-radius:8px; background:var(--vurgu); color:#fff; text-decoration:none; font-weight:600; }
+</style>
+</head>
+<body><main>
+<h1>BIST TradingView Göstergeleri</h1>
+<p class="alt">Borsa İstanbul için 3 ücretsiz, açık kaynak Pine Script v6 göstergesi · MIT lisansı</p>
+<a class="ig" href="https://www.instagram.com/umutkilicbalikesir/">📸 Instagram · @umutkilicbalikesir</a>
+<p><img src="img/asels-ornek.jpg" alt="ASELS günlük grafikte destek/direnç, trend yönü ve güven skoru tabloları" width="700" height="550"></p>
+<p><strong>Yatırım tavsiyesi değildir.</strong> Göstergeler bilgi amaçlıdır, al/sat kararı vermez ve geçmişe dönük getiri testi yapılmamıştır.</p>
+
+<h2>Kurulum</h2>
+<ol>
+<li>TradingView'de bir BIST grafiği aç (ör. BIST:ASELS, günlük).</li>
+<li>Alttaki <b>Pine Editor</b> sekmesini aç, <b>Create new → Indicator</b> seç ve içeriği sil.</li>
+<li>Aşağıdaki göstergelerden birinin kodunu kopyalayıp yapıştır, <b>Save</b> ve <b>Add to chart</b>.</li>
+<li>Kaydedilen göstergeler <b>Indicators → My scripts</b> altında durur; göz simgesiyle açılıp kapanır.</li>
+</ol>
+
+<section id="destek-direnc">
+  <h2>UK · Otomatik Destek / Direnç</h2>
+  <p>BIST hisseleri için otomatik destek ve direnç bölgeleri: son 6 ayın tepe ve dipleri ATR&#x27;ye göre kümelenir, en az 2 kez test edilmiş en yakın 3 destek ve 3 direnç kutu olarak çizilir. Tabloda uzaklık, ödül/risk, 6 ay zirve/dip; kırılım alarmı.</p>
+  <p><a href="https://github.com/igumutkilicbalikesir/bist-tradingview-gostergeleri/blob/main/scripts/destek-direnc.pine">GitHub'da aç</a> · <a href="https://github.com/igumutkilicbalikesir/bist-tradingview-gostergeleri/raw/main/scripts/destek-direnc.pine">Ham kod (Raw)</a>
+     · <button onclick="kopyala('destek-direnc')">Kodu kopyala</button></p>
+  <details><summary>Pine Script kodunu göster</summary><pre><code id="kod-destek-direnc">//@version=6
+// UK · Otomatik Destek / Direnç
+// Seçilen dönemdeki (varsayılan 6 ay) tepe ve dipleri bulur, birbirine yakın olanları ATR&#x27;ye göre
+// bölgelere toplar, fiyata en yakın ve en az iki kez test edilmiş bölgeleri grafikte kutu olarak çizer.
+// Her zaman diliminde çalışır: bölge kalınlığı grafiğin oynaklığına (ATR) göre kendini ayarlar.
+// Hazırlayan: Instagram @umutkilicbalikesir
+indicator(&quot;UK · Otomatik Destek / Direnç&quot;, shorttitle = &quot;UK D/D&quot;, overlay = true, max_boxes_count = 60, max_lines_count = 10, max_labels_count = 10, max_bars_back = 5000)
+
+// ── Ayarlar ──
+G1 = &quot;Hesaplama&quot;
+iMonths  = input.int(6, &quot;Dönem (ay)&quot;, minval = 1, maxval = 36, group = G1, tooltip = &quot;Seviyeler bu süredeki tepe ve diplerden çıkarılır. Orta vade için 6 ay.&quot;)
+iPivot   = input.int(0, &quot;Tepe/dip genişliği (0 = otomatik)&quot;, minval = 0, maxval = 30, group = G1, tooltip = &quot;Bir mumun tepe sayılması için sağında ve solunda kaç mumun daha alçak olması gerektiği. Otomatik: haftalık/aylık grafikte 2, diğerlerinde 5.&quot;)
+iAtrMult = input.float(0.6, &quot;Bölge kalınlığı (ATR katı)&quot;, minval = 0.1, maxval = 3.0, step = 0.1, group = G1, tooltip = &quot;Aralarındaki fark bu mesafeden az olan tepe ve dipler tek bölgede birleşir.&quot;)
+iMinHit  = input.int(2, &quot;En az temas&quot;, minval = 1, maxval = 10, group = G1, tooltip = &quot;Bir bölgenin çizilmesi için kaç kez test edilmiş olması gerektiği.&quot;)
+iCount   = input.int(3, &quot;Her yönde seviye sayısı&quot;, minval = 1, maxval = 8, group = G1)
+iExtreme = input.bool(true, &quot;Dönem zirvesi ve dibini çiz&quot;, group = G1)
+
+G2 = &quot;Görünüm&quot;
+cSup   = input.color(#26a69a, &quot;Destek&quot;, group = G2)
+cRes   = input.color(#ef5350, &quot;Direnç&quot;, group = G2)
+iFill  = input.int(82, &quot;Dolgu saydamlığı&quot;, minval = 0, maxval = 100, group = G2)
+iExt   = input.int(20, &quot;Sağa uzatma (mum)&quot;, minval = 0, maxval = 300, group = G2)
+iTable = input.bool(true, &quot;Seviye tablosu&quot;, group = G2)
+iTPos  = input.string(&quot;Sol alt&quot;, &quot;Tablo konumu&quot;, options = [&quot;Sağ üst&quot;, &quot;Sağ alt&quot;, &quot;Sol üst&quot;, &quot;Sol alt&quot;], group = G2)
+
+// ── Tepe ve dipleri topla ──
+pw     = iPivot &gt; 0 ? iPivot : (timeframe.isweekly or timeframe.ismonthly ? 2 : 5)
+atr    = ta.atr(14)
+ph     = ta.pivothigh(high, pw, pw)
+pl     = ta.pivotlow(low, pw, pw)
+startT = time - int(iMonths * 30.44 * 86400000.0)
+
+var pvP = array.new&lt;float&gt;()
+var pvT = array.new&lt;int&gt;()
+var pvB = array.new&lt;int&gt;()
+if not na(ph)
+    pvP.push(ph)
+    pvT.push(time[pw])
+    pvB.push(bar_index - pw)
+if not na(pl)
+    pvP.push(pl)
+    pvT.push(time[pw])
+    pvB.push(bar_index - pw)
+while pvT.size() &gt; 0 and pvT.first() &lt; startT
+    pvP.shift()
+    pvT.shift()
+    pvB.shift()
+
+// Bir kümeyi bölge olarak kaydeder; tek dokunuşlu bölgeler en az çeyrek tolerans kalınlığında çizilir
+addZone(array&lt;float&gt; mids, array&lt;float&gt; tops, array&lt;float&gt; bots, array&lt;int&gt; hits, array&lt;int&gt; lefts, float lo, float hi, int n, int left, float tol) =&gt;
+    mid  = (lo + hi) / 2
+    half = math.max((hi - lo) / 2, tol * 0.25)
+    mids.push(mid)
+    tops.push(mid + half)
+    bots.push(mid - half)
+    hits.push(n)
+    lefts.push(left)
+
+pct(float x) =&gt;
+    na(x) ? &quot;–&quot; : &quot;%&quot; + (x &gt;= 0 ? &quot;+&quot; : &quot;&quot;) + str.tostring(x, &quot;#.#&quot;)
+
+tPos = switch iTPos
+    &quot;Sağ alt&quot; =&gt; position.bottom_right
+    &quot;Sol üst&quot; =&gt; position.top_left
+    &quot;Sol alt&quot; =&gt; position.bottom_left
+    =&gt; position.top_right
+
+var tbl     = table.new(tPos, 3, 22, border_width = 1, border_color = color.new(color.gray, 80), frame_color = color.new(color.gray, 60), frame_width = 1)
+var boxes   = array.new&lt;box&gt;()
+var lns     = array.new&lt;line&gt;()
+var lbls    = array.new&lt;label&gt;()
+var float confSup = na
+var float confRes = na
+var bool imzaHazir = false
+
+if barstate.islast
+    // Kapanışta bir önceki mumun seviyeleri kırıldıysa alarm
+    if barstate.isconfirmed
+        if not na(confSup) and close &lt; confSup
+            alert(syminfo.ticker + &quot; desteği aşağı kırdı: &quot; + str.tostring(confSup, format.mintick), alert.freq_once_per_bar_close)
+        if not na(confRes) and close &gt; confRes
+            alert(syminfo.ticker + &quot; direnci yukarı geçti: &quot; + str.tostring(confRes, format.mintick), alert.freq_once_per_bar_close)
+
+    for b in boxes
+        b.delete()
+    boxes.clear()
+    for l in lns
+        l.delete()
+    lns.clear()
+    for lb in lbls
+        lb.delete()
+    lbls.clear()
+
+    // ── Kümeleme: fiyata göre sıralanmış tepe/dipler tolerans içinde birleşir ──
+    tol   = atr * iAtrMult
+    zMid  = array.new&lt;float&gt;()
+    zTop  = array.new&lt;float&gt;()
+    zBot  = array.new&lt;float&gt;()
+    zHit  = array.new&lt;int&gt;()
+    zLeft = array.new&lt;int&gt;()
+    n = pvP.size()
+    if n &gt; 0
+        ord = pvP.sort_indices(order.ascending)
+        float cLo = na
+        float cHi = na
+        int cN = 0
+        int cL = 0
+        for i = 0 to n - 1
+            k = ord.get(i)
+            p = pvP.get(k)
+            if cN &gt; 0 and p - cLo &lt;= tol
+                cHi := p
+                cN += 1
+                cL := math.min(cL, pvB.get(k))
+            else
+                if cN &gt;= iMinHit
+                    addZone(zMid, zTop, zBot, zHit, zLeft, cLo, cHi, cN, cL, tol)
+                cLo := p
+                cHi := p
+                cN := 1
+                cL := pvB.get(k)
+        if cN &gt;= iMinHit
+            addZone(zMid, zTop, zBot, zHit, zLeft, cLo, cHi, cN, cL, tol)
+
+    // ── Fiyatın altı destek, üstü direnç; her yönde en yakın N bölge ──
+    supI = array.new&lt;int&gt;()
+    supD = array.new&lt;float&gt;()
+    resI = array.new&lt;int&gt;()
+    resD = array.new&lt;float&gt;()
+    zn = zMid.size()
+    if zn &gt; 0
+        for j = 0 to zn - 1
+            m = zMid.get(j)
+            if m &lt; close
+                supI.push(j)
+                supD.push(close - m)
+            else
+                resI.push(j)
+                resD.push(m - close)
+
+    tbl.clear(0, 0, 2, 20)
+    txtC = chart.fg_color
+    bgC  = color.new(chart.bg_color, 0)
+    if iTable
+        tbl.cell(0, 0, &quot;Seviye&quot;, text_color = txtC, bgcolor = bgC, text_size = size.small)
+        tbl.cell(1, 0, &quot;Bölge&quot;, text_color = txtC, bgcolor = bgC, text_size = size.small)
+        tbl.cell(2, 0, &quot;Uzaklık&quot;, text_color = txtC, bgcolor = bgC, text_size = size.small)
+
+    rCount = math.min(iCount, resI.size())
+    sCount = math.min(iCount, supI.size())
+    confRes := na
+    confSup := na
+
+    if rCount &gt; 0
+        rOrd = resD.sort_indices(order.ascending)
+        for r = 0 to rCount - 1
+            j   = resI.get(rOrd.get(r))
+            m   = zMid.get(j)
+            txt = &quot;Direnç &quot; + str.tostring(r + 1) + &quot; · &quot; + str.tostring(m, format.mintick) + &quot; · &quot; + str.tostring(zHit.get(j)) + &quot; temas&quot;
+            boxes.push(box.new(zLeft.get(j), zTop.get(j), bar_index + iExt, zBot.get(j), border_color = color.new(cRes, 40), bgcolor = color.new(cRes, iFill), text = txt, text_size = size.small, text_color = cRes, text_halign = text.align_right, text_valign = text.align_center))
+            if r == 0 and barstate.isconfirmed
+                confRes := zTop.get(j)
+            if iTable
+                row = 1 + (rCount - 1 - r)
+                tbl.cell(0, row, &quot;Direnç &quot; + str.tostring(r + 1), text_color = color.white, bgcolor = color.new(cRes, 30), text_size = size.small)
+                tbl.cell(1, row, str.tostring(zBot.get(j), format.mintick) + &quot; – &quot; + str.tostring(zTop.get(j), format.mintick), text_color = txtC, bgcolor = bgC, text_size = size.small)
+                tbl.cell(2, row, pct((m / close - 1) * 100), text_color = txtC, bgcolor = bgC, text_size = size.small)
+
+    priceRow = 1 + rCount
+    if iTable
+        tbl.cell(0, priceRow, &quot;Fiyat&quot;, text_color = txtC, bgcolor = color.new(color.gray, 70), text_size = size.small)
+        tbl.cell(1, priceRow, str.tostring(close, format.mintick), text_color = txtC, bgcolor = color.new(color.gray, 70), text_size = size.small)
+        tbl.cell(2, priceRow, &quot;&quot;, bgcolor = color.new(color.gray, 70))
+
+    if sCount &gt; 0
+        sOrd = supD.sort_indices(order.ascending)
+        for s = 0 to sCount - 1
+            j   = supI.get(sOrd.get(s))
+            m   = zMid.get(j)
+            txt = &quot;Destek &quot; + str.tostring(s + 1) + &quot; · &quot; + str.tostring(m, format.mintick) + &quot; · &quot; + str.tostring(zHit.get(j)) + &quot; temas&quot;
+            boxes.push(box.new(zLeft.get(j), zTop.get(j), bar_index + iExt, zBot.get(j), border_color = color.new(cSup, 40), bgcolor = color.new(cSup, iFill), text = txt, text_size = size.small, text_color = cSup, text_halign = text.align_right, text_valign = text.align_center))
+            if s == 0 and barstate.isconfirmed
+                confSup := zBot.get(j)
+            if iTable
+                row = priceRow + 1 + s
+                tbl.cell(0, row, &quot;Destek &quot; + str.tostring(s + 1), text_color = color.white, bgcolor = color.new(cSup, 30), text_size = size.small)
+                tbl.cell(1, row, str.tostring(zBot.get(j), format.mintick) + &quot; – &quot; + str.tostring(zTop.get(j), format.mintick), text_color = txtC, bgcolor = bgC, text_size = size.small)
+                tbl.cell(2, row, pct((m / close - 1) * 100), text_color = txtC, bgcolor = bgC, text_size = size.small)
+
+    // ── Risk / ödül: en yakın dirence kalan yol ÷ en yakın desteğe kalan yol ──
+    rrRow = priceRow + sCount + 1
+    if iTable and rCount &gt; 0 and sCount &gt; 0
+        up = zMid.get(resI.get(resD.sort_indices(order.ascending).get(0))) - close
+        dn = close - zMid.get(supI.get(supD.sort_indices(order.ascending).get(0)))
+        rr = dn &gt; 0 ? up / dn : float(na)
+        tbl.cell(0, rrRow, &quot;Ödül / risk&quot;, text_color = txtC, bgcolor = bgC, text_size = size.small)
+        tbl.cell(1, rrRow, na(rr) ? &quot;–&quot; : str.tostring(rr, &quot;#.##&quot;) + &quot; kat&quot;, text_color = na(rr) ? txtC : rr &gt;= 2 ? cSup : rr &lt; 1 ? cRes : txtC, bgcolor = bgC, text_size = size.small)
+        tbl.cell(2, rrRow, &quot;D1 → R1&quot;, text_color = txtC, bgcolor = bgC, text_size = size.small)
+
+    // ── Dönem zirvesi ve dibi ──
+    if iExtreme
+        float pHi = na
+        float pLo = na
+        int bHi = na
+        int bLo = na
+        for i = 0 to math.min(bar_index, 4999)
+            if time[i] &lt; startT
+                break
+            if na(pHi) or high[i] &gt; pHi
+                pHi := high[i]
+                bHi := bar_index - i
+            if na(pLo) or low[i] &lt; pLo
+                pLo := low[i]
+                bLo := bar_index - i
+        lastRow = rrRow + 1
+        if not na(pHi)
+            lns.push(line.new(bHi, pHi, bar_index + iExt, pHi, color = color.new(cRes, 20), style = line.style_dashed))
+            lbls.push(label.new(bar_index + iExt, pHi, str.tostring(iMonths) + &quot; ay zirve · &quot; + str.tostring(pHi, format.mintick), style = label.style_label_left, color = color.new(color.white, 100), textcolor = cRes, size = size.small))
+            if iTable
+                tbl.cell(0, lastRow, str.tostring(iMonths) + &quot; ay zirve&quot;, text_color = cRes, bgcolor = bgC, text_size = size.small)
+                tbl.cell(1, lastRow, str.tostring(pHi, format.mintick), text_color = txtC, bgcolor = bgC, text_size = size.small)
+                tbl.cell(2, lastRow, pct((pHi / close - 1) * 100), text_color = txtC, bgcolor = bgC, text_size = size.small)
+        if not na(pLo)
+            lns.push(line.new(bLo, pLo, bar_index + iExt, pLo, color = color.new(cSup, 20), style = line.style_dashed))
+            lbls.push(label.new(bar_index + iExt, pLo, str.tostring(iMonths) + &quot; ay dip · &quot; + str.tostring(pLo, format.mintick), style = label.style_label_left, color = color.new(color.white, 100), textcolor = cSup, size = size.small))
+            if iTable
+                tbl.cell(0, lastRow + 1, str.tostring(iMonths) + &quot; ay dip&quot;, text_color = cSup, bgcolor = bgC, text_size = size.small)
+                tbl.cell(1, lastRow + 1, str.tostring(pLo, format.mintick), text_color = txtC, bgcolor = bgC, text_size = size.small)
+                tbl.cell(2, lastRow + 1, pct((pLo / close - 1) * 100), text_color = txtC, bgcolor = bgC, text_size = size.small)
+
+    // ── İmza: tablonun en alt satırı (boş satırlar çizilmez) ──
+    if iTable
+        tbl.cell(0, 21, &quot;📸 Instagram · @umutkilicbalikesir&quot;, text_color = #E1306C, bgcolor = bgC, text_size = size.small)
+        if not imzaHazir
+            tbl.merge_cells(0, 21, 2, 21)
+            imzaHazir := true
+</code></pre></details>
+</section>
+<section id="trend-yonu">
+  <h2>UK · Trend Yönü</h2>
+  <p>7 ölçütlü trend puanı (EMA dizilimi, 200 EMA, 50 EMA eğimi, tepe-dip yapısı, SuperTrend, ADX/DMI, haftalık trend): YÜKSELEN / DÜŞEN / YATAY, trendin süresi ve değişim alarmları.</p>
+  <p><a href="https://github.com/igumutkilicbalikesir/bist-tradingview-gostergeleri/blob/main/scripts/trend-yonu.pine">GitHub'da aç</a> · <a href="https://github.com/igumutkilicbalikesir/bist-tradingview-gostergeleri/raw/main/scripts/trend-yonu.pine">Ham kod (Raw)</a>
+     · <button onclick="kopyala('trend-yonu')">Kodu kopyala</button></p>
+  <details><summary>Pine Script kodunu göster</summary><pre><code id="kod-trend-yonu">//@version=6
+// UK · Trend Yönü
+// Yedi bağımsız ölçütün her biri +1 (yükseliş), 0 (kararsız) ya da -1 (düşüş) verir.
+// Toplam puan eşiğin üstündeyse YÜKSELEN, eksi eşiğin altındaysa DÜŞEN, arada YATAY.
+// Ölçütler: EMA dizilimi, fiyatın 200 EMA&#x27;ya göre yeri, 50 EMA eğimi, tepe-dip yapısı,
+// SuperTrend, ADX/DMI ve üst zaman dilimi trendi. Her zaman diliminde çalışır.
+// Hazırlayan: Instagram @umutkilicbalikesir
+indicator(&quot;UK · Trend Yönü&quot;, shorttitle = &quot;UK Trend&quot;, overlay = true, max_labels_count = 300)
+
+// ── Ayarlar ──
+G1 = &quot;Ortalamalar&quot;
+iFast   = input.int(20, &quot;Hızlı EMA&quot;, minval = 2, group = G1)
+iMid    = input.int(50, &quot;Orta EMA&quot;, minval = 5, group = G1)
+iSlow   = input.int(200, &quot;Yavaş EMA&quot;, minval = 20, group = G1)
+iShowMA = input.bool(true, &quot;Ortalamaları çiz&quot;, group = G1)
+
+G2 = &quot;Ölçütler&quot;
+iSwing  = input.int(5, &quot;Tepe/dip genişliği&quot;, minval = 2, maxval = 20, group = G2)
+iStF    = input.float(3.0, &quot;SuperTrend çarpanı&quot;, minval = 0.5, step = 0.1, group = G2)
+iStP    = input.int(10, &quot;SuperTrend ATR süresi&quot;, minval = 1, group = G2)
+iAdxLen = input.int(14, &quot;ADX süresi&quot;, minval = 2, group = G2)
+iAdxMin = input.float(20, &quot;Trend sayılması için en az ADX&quot;, minval = 5, group = G2)
+iHtf    = input.timeframe(&quot;W&quot;, &quot;Üst zaman dilimi&quot;, group = G2, tooltip = &quot;Grafikten büyük bir zaman dilimi seçin. Günlük grafik için Haftalık (W), haftalık grafik için Aylık (M).&quot;)
+iThr    = input.int(3, &quot;Trend eşiği (7 üzerinden)&quot;, minval = 1, maxval = 7, group = G2, tooltip = &quot;Toplam puan bu değere ulaşırsa YÜKSELEN, eksi bu değere inerse DÜŞEN, arada YATAY.&quot;)
+
+G3 = &quot;Görünüm&quot;
+cUp    = input.color(#26a69a, &quot;Yükselen&quot;, group = G3)
+cDn    = input.color(#ef5350, &quot;Düşen&quot;, group = G3)
+cSide  = input.color(#9e9e9e, &quot;Yatay&quot;, group = G3)
+iBg    = input.bool(true, &quot;Arka planı trende göre boya&quot;, group = G3)
+iBar   = input.bool(false, &quot;Mumları trende göre boya&quot;, group = G3)
+iLbl   = input.bool(true, &quot;Trend değişimlerini etiketle&quot;, group = G3)
+iTable = input.bool(true, &quot;Ölçüt tablosu&quot;, group = G3)
+iTPos  = input.string(&quot;Sağ alt&quot;, &quot;Tablo konumu&quot;, options = [&quot;Sağ üst&quot;, &quot;Sağ alt&quot;, &quot;Sol üst&quot;, &quot;Sol alt&quot;], group = G3)
+
+// ── 1) EMA dizilimi ──
+emaF = ta.ema(close, iFast)
+emaM = ta.ema(close, iMid)
+emaS = ta.ema(close, iSlow)
+c1 = emaF &gt; emaM and emaM &gt; emaS ? 1 : emaF &lt; emaM and emaM &lt; emaS ? -1 : 0
+
+// ── 2) Fiyat / yavaş EMA ──
+c2 = na(emaS) ? 0 : close &gt; emaS ? 1 : -1
+
+// ── 3) Orta EMA eğimi (10 mumda ATR cinsinden) ──
+atr   = ta.atr(14)
+slope = (emaM - emaM[10]) / atr
+c3 = na(slope) ? 0 : slope &gt; 0.5 ? 1 : slope &lt; -0.5 ? -1 : 0
+
+// ── 4) Tepe-dip yapısı: yükselen tepe + yükselen dip ya da tersi; son tepe/dip kırılımı öncelikli ──
+ph = ta.pivothigh(high, iSwing, iSwing)
+pl = ta.pivotlow(low, iSwing, iSwing)
+var float ph1 = na
+var float ph2 = na
+var float pl1 = na
+var float pl2 = na
+if not na(ph)
+    ph2 := ph1
+    ph1 := ph
+if not na(pl)
+    pl2 := pl1
+    pl1 := pl
+c4 = 0
+if not na(ph2) and not na(pl2)
+    hh = ph1 &gt; ph2
+    hl = pl1 &gt; pl2
+    c4 := hh and hl ? 1 : not hh and not hl ? -1 : 0
+if not na(pl1) and close &lt; pl1
+    c4 := -1
+if not na(ph1) and close &gt; ph1
+    c4 := 1
+
+// ── 5) SuperTrend ──
+[st, stDir] = ta.supertrend(iStF, iStP)
+c5 = stDir &lt; 0 ? 1 : -1
+
+// ── 6) ADX / DMI: trend gücü yetersizse 0 ──
+[diP, diM, adx] = ta.dmi(iAdxLen, iAdxLen)
+c6 = adx &lt; iAdxMin ? 0 : diP &gt; diM ? 1 : -1
+
+// ── 7) Üst zaman dilimi (kapanmış mumla, geriye dönük boyama yapmaz) ──
+htfDir() =&gt;
+    e = ta.ema(close, 20)
+    close &gt; e and e &gt; e[1] ? 1 : close &lt; e and e &lt; e[1] ? -1 : 0
+c7 = nz(request.security(syminfo.tickerid, iHtf, htfDir()[1], lookahead = barmerge.lookahead_on))
+
+// ── Toplam ──
+score  = c1 + c2 + c3 + c4 + c5 + c6 + c7
+regime = score &gt;= iThr ? 1 : score &lt;= -iThr ? -1 : 0
+regCol = regime == 1 ? cUp : regime == -1 ? cDn : cSide
+var int regStart = na
+if na(regime[1]) or regime != regime[1]
+    regStart := bar_index
+
+plot(iShowMA ? emaF : na, &quot;Hızlı EMA&quot;, color.new(#42a5f5, 20))
+plot(iShowMA ? emaM : na, &quot;Orta EMA&quot;, color.new(#ffa726, 20))
+plot(iShowMA ? emaS : na, &quot;Yavaş EMA&quot;, color.new(#ab47bc, 10), 2)
+plot(stDir &lt; 0 ? st : na, &quot;SuperTrend yukarı&quot;, cUp, 2, plot.style_linebr)
+plot(stDir &gt; 0 ? st : na, &quot;SuperTrend aşağı&quot;, cDn, 2, plot.style_linebr)
+bgcolor(iBg ? color.new(regCol, 92) : na, title = &quot;Trend arka planı&quot;)
+barcolor(iBar ? regCol : na, title = &quot;Trend mum rengi&quot;)
+
+if iLbl and not na(regime[1]) and regime != regime[1]
+    up = regime == 1
+    dn = regime == -1
+    label.new(bar_index, dn ? high : low, up ? &quot;▲ YÜKSELEN&quot; : dn ? &quot;▼ DÜŞEN&quot; : &quot;◆ YATAY&quot;, yloc = dn ? yloc.abovebar : yloc.belowbar, style = dn ? label.style_label_down : label.style_label_up, color = regCol, textcolor = color.white, size = size.small)
+
+alertcondition(regime == 1 and regime[1] != 1, &quot;Trend YÜKSELEN oldu&quot;, &quot;{{ticker}} trendi YÜKSELEN&#x27;e döndü&quot;)
+alertcondition(regime == -1 and regime[1] != -1, &quot;Trend DÜŞEN oldu&quot;, &quot;{{ticker}} trendi DÜŞEN&#x27;e döndü&quot;)
+alertcondition(regime == 0 and regime[1] != 0, &quot;Trend YATAY oldu&quot;, &quot;{{ticker}} trendi YATAY&#x27;a döndü&quot;)
+
+// ── Tablo ──
+tPos = switch iTPos
+    &quot;Sağ üst&quot; =&gt; position.top_right
+    &quot;Sol üst&quot; =&gt; position.top_left
+    &quot;Sol alt&quot; =&gt; position.bottom_left
+    =&gt; position.bottom_right
+var tb = table.new(tPos, 3, 11, border_width = 1, border_color = color.new(color.gray, 80), frame_color = color.new(color.gray, 60), frame_width = 1)
+
+var bool imzaHazir = false
+
+puan(int v) =&gt;
+    v &gt; 0 ? &quot;▲ +1&quot; : v &lt; 0 ? &quot;▼ −1&quot; : &quot;• 0&quot;
+renk(int v) =&gt;
+    v &gt; 0 ? cUp : v &lt; 0 ? cDn : cSide
+yon(int v, string a, string b, string c) =&gt;
+    v &gt; 0 ? a : v &lt; 0 ? b : c
+
+if barstate.islast and iTable
+    fg = chart.fg_color
+    bg = chart.bg_color
+    tb.cell(0, 0, &quot;Ölçüt&quot;, text_color = fg, bgcolor = bg, text_size = size.small)
+    tb.cell(1, 0, &quot;Durum&quot;, text_color = fg, bgcolor = bg, text_size = size.small)
+    tb.cell(2, 0, &quot;Puan&quot;, text_color = fg, bgcolor = bg, text_size = size.small)
+    names = array.from(&quot;EMA dizilimi&quot;, &quot;Fiyat / &quot; + str.tostring(iSlow) + &quot; EMA&quot;, str.tostring(iMid) + &quot; EMA eğimi&quot;, &quot;Tepe-dip yapısı&quot;, &quot;SuperTrend&quot;, &quot;ADX / DMI&quot;, &quot;Üst zaman (&quot; + iHtf + &quot;)&quot;)
+    vals  = array.from(c1, c2, c3, c4, c5, c6, c7)
+    descs = array.from(yon(c1, str.format(&quot;{0} &gt; {1} &gt; {2}&quot;, iFast, iMid, iSlow), str.format(&quot;{0} &lt; {1} &lt; {2}&quot;, iFast, iMid, iSlow), &quot;karışık&quot;), yon(c2, &quot;üstünde&quot;, &quot;altında&quot;, &quot;veri yok&quot;), yon(c3, &quot;yukarı&quot;, &quot;aşağı&quot;, &quot;yatay&quot;), yon(c4, &quot;yükselen tepe ve dip&quot;, &quot;alçalan tepe ve dip&quot;, &quot;karışık&quot;), yon(c5, &quot;yukarı&quot;, &quot;aşağı&quot;, &quot;–&quot;), &quot;ADX &quot; + str.tostring(adx, &quot;#&quot;) + yon(c6, &quot; · alıcı güçlü&quot;, &quot; · satıcı güçlü&quot;, &quot; · trend zayıf&quot;), yon(c7, &quot;yukarı&quot;, &quot;aşağı&quot;, &quot;yatay&quot;))
+    for i = 0 to 6
+        v = vals.get(i)
+        tb.cell(0, i + 1, names.get(i), text_color = fg, bgcolor = bg, text_halign = text.align_left, text_size = size.small)
+        tb.cell(1, i + 1, descs.get(i), text_color = fg, bgcolor = bg, text_halign = text.align_left, text_size = size.small)
+        tb.cell(2, i + 1, puan(v), text_color = color.white, bgcolor = color.new(renk(v), 25), text_size = size.small)
+    rTxt = regime == 1 ? &quot;YÜKSELEN&quot; : regime == -1 ? &quot;DÜŞEN&quot; : &quot;YATAY&quot;
+    tb.cell(0, 8, &quot;TREND&quot;, text_color = color.white, bgcolor = regCol, text_size = size.normal)
+    tb.cell(1, 8, rTxt + &quot; · güç %&quot; + str.tostring(math.abs(score) / 7.0 * 100, &quot;#&quot;), text_color = color.white, bgcolor = regCol, text_size = size.normal)
+    tb.cell(2, 8, (score &gt; 0 ? &quot;+&quot; : &quot;&quot;) + str.tostring(score) + &quot; / 7&quot;, text_color = color.white, bgcolor = regCol, text_size = size.normal)
+    tb.cell(0, 9, &quot;Süre&quot;, text_color = fg, bgcolor = bg, text_size = size.small)
+    tb.cell(1, 9, str.tostring(bar_index - regStart) + &quot; mumdur &quot; + rTxt, text_color = fg, bgcolor = bg, text_halign = text.align_left, text_size = size.small)
+    tb.cell(2, 9, &quot;&quot;, bgcolor = bg)
+    tb.cell(0, 10, &quot;📸 Instagram · @umutkilicbalikesir&quot;, text_color = #E1306C, bgcolor = bg, text_size = size.small)
+    if not imzaHazir
+        tb.merge_cells(0, 10, 2, 10)
+        imzaHazir := true
+</code></pre></details>
+</section>
+<section id="guven-skoru-sirket-olaylari">
+  <h2>UK · Güven Skoru + Şirket Olayları</h2>
+  <p>9 faktörlü 0–100 orta vade güven skoru (trend, momentum, XU100&#x27;e göre güç, RSI, oynaklık, zirveden uzaklık, para akışı, HBK, haber) ve grafikte bilanço, temettü, bölünme/bedelsiz ve haber işaretleri. BIST hacmi BIST_DLY akışından alınır.</p>
+  <p><a href="https://github.com/igumutkilicbalikesir/bist-tradingview-gostergeleri/blob/main/scripts/guven-skoru-sirket-olaylari.pine">GitHub'da aç</a> · <a href="https://github.com/igumutkilicbalikesir/bist-tradingview-gostergeleri/raw/main/scripts/guven-skoru-sirket-olaylari.pine">Ham kod (Raw)</a>
+     · <button onclick="kopyala('guven-skoru-sirket-olaylari')">Kodu kopyala</button></p>
+  <details><summary>Pine Script kodunu göster</summary><pre><code id="kod-guven-skoru-sirket-olaylari">//@version=6
+// UK · Güven Skoru (orta vade, 6 ay) + Şirket Olayları
+// Skor 0–100 arasıdır ve dokuz faktörün ağırlıklı ortalamasıdır. Hepsi GÜNLÜK veriden hesaplanır,
+// bu yüzden hangi zaman diliminde bakarsanız bakın aynı skoru görürsünüz.
+//   1 Trend yapısı      fiyat ve 50 günlük ortalama, 200 günlük ortalamanın üstünde mi, 50G yükseliyor mu
+//   2 Momentum          6 ve 3 aylık getiri
+//   3 Endekse göre güç  6 aylık getiri eksi kıyas endeksinin 6 aylık getirisi
+//   4 RSI dengesi       45–65 arası en iyi; aşırı alım ve aşırı satım puan düşürür
+//   5 Oynaklık          yıllık oynaklık düştükçe puan artar
+//   6 Zirveden uzaklık  6 aylık zirveye yakınlık
+//   7 Para akışı        son 3 ayda yükselen günlerin hacmi / toplam hacim
+//   8 Kârlılık          son 4 çeyrek HBK toplamı pozitif mi, bir yıl öncesine göre büyüyor mu
+//   9 Haber etkisi      son 6 ayda listeye girdiğiniz haberlerin net etkisi
+// Verisi olmayan faktör (ör. kısa geçmiş, bilanço verisi yok) hesaba katılmaz, kalan ağırlıklar yeniden dağıtılır.
+//
+// Olaylar: bilanço (B), temettü (T), bölünme/bedelsiz (S) TradingView verisinden otomatik gelir.
+// Haberler (H) &quot;Haber listesi&quot; kutusuna girilir; Pine Script KAP veya haber akışına erişemez.
+// Her olayın üstüne gelince, olaydan sonraki N mumdaki fiyat tepkisi ve hacim artışı görünür.
+// Hazırlayan: Instagram @umutkilicbalikesir
+indicator(&quot;UK · Güven Skoru + Şirket Olayları&quot;, shorttitle = &quot;UK Güven&quot;, overlay = true, max_labels_count = 500)
+
+// ── Ayarlar ──
+G0 = &quot;Kıyas&quot;
+iIdx = input.symbol(&quot;BIST:XU100&quot;, &quot;Kıyas endeksi&quot;, group = G0)
+iVolP = input.string(&quot;BIST_DLY:&quot;, &quot;BIST hacim öneki&quot;, group = G0, tooltip = &quot;BIST: akışında hacim yok; hacim 15 dk gecikmeli BIST_DLY: akışından alınır. Boş bırakılırsa grafiğin kendi hacmi kullanılır.&quot;)
+
+G1 = &quot;Ağırlıklar&quot;
+wTrend = input.int(20, &quot;Trend yapısı&quot;, minval = 0, maxval = 50, group = G1)
+wMom   = input.int(10, &quot;Momentum (3–6 ay)&quot;, minval = 0, maxval = 50, group = G1)
+wRel   = input.int(15, &quot;Endekse göre güç&quot;, minval = 0, maxval = 50, group = G1)
+wRsi   = input.int(10, &quot;RSI dengesi&quot;, minval = 0, maxval = 50, group = G1)
+wVol   = input.int(10, &quot;Oynaklık&quot;, minval = 0, maxval = 50, group = G1)
+wDd    = input.int(10, &quot;Zirveden uzaklık&quot;, minval = 0, maxval = 50, group = G1)
+wFlow  = input.int(10, &quot;Para akışı&quot;, minval = 0, maxval = 50, group = G1)
+wEps   = input.int(10, &quot;Kârlılık (HBK)&quot;, minval = 0, maxval = 50, group = G1)
+wNews  = input.int(5, &quot;Haber etkisi&quot;, minval = 0, maxval = 50, group = G1)
+
+G2 = &quot;Olaylar&quot;
+iShowEarn = input.bool(true, &quot;Bilançolar (B)&quot;, group = G2)
+iShowDiv  = input.bool(true, &quot;Temettüler (T)&quot;, group = G2)
+iShowSpl  = input.bool(true, &quot;Bölünme / bedelsiz (S)&quot;, group = G2)
+iShowNews = input.bool(true, &quot;Haberler (H)&quot;, group = G2)
+iNewsTxt  = input.bool(false, &quot;Haber başlığını grafiğe yaz&quot;, group = G2)
+iReact    = input.int(5, &quot;Tepki ölçümü (mum)&quot;, minval = 1, maxval = 30, group = G2, tooltip = &quot;Olaydan önceki kapanışa göre kaç mum sonraki fiyat değişimi ve hacim ölçülsün.&quot;)
+iNews     = input.text_area(&quot;&quot;, &quot;Haber listesi&quot;, group = G2, tooltip = &quot;Her satıra bir haber:\nHİSSE | TARİH | ETKİ | BAŞLIK\n\nTarih: 2026-10-15 ya da 15.10.2026\nEtki: + olumlu, - olumsuz, 0 nötr\nHİSSE yerine * yazarsanız her grafikte görünür.\n\nÖrnek:\nASELS | 15.10.2026 | + | Yeni ihracat sözleşmesi\nKLSER | 2026-10-30 | - | Sermaye artırımı ertelendi\n\nTüm hisselerin haberlerini tek listede tutabilirsiniz; her grafikte yalnızca o hisseninkiler görünür.&quot;)
+
+G3 = &quot;Görünüm&quot;
+iTable = input.bool(true, &quot;Skor tablosu&quot;, group = G3)
+iTPos  = input.string(&quot;Sağ üst&quot;, &quot;Tablo konumu&quot;, options = [&quot;Sağ üst&quot;, &quot;Sağ alt&quot;, &quot;Sol üst&quot;, &quot;Sol alt&quot;], group = G3)
+iTSize = input.string(&quot;Küçük&quot;, &quot;Tablo yazı boyutu&quot;, options = [&quot;Çok küçük&quot;, &quot;Küçük&quot;, &quot;Normal&quot;], group = G3)
+
+// ── Yardımcılar ──
+lin(float x, float x0, float x1) =&gt;
+    na(x) ? float(na) : math.max(0.0, math.min(100.0, (x - x0) / (x1 - x0) * 100.0))
+
+pct(float x) =&gt;
+    na(x) ? &quot;–&quot; : &quot;%&quot; + (x &gt;= 0 ? &quot;+&quot; : &quot;&quot;) + str.tostring(x, &quot;#.#&quot;)
+
+// Taban sıfıra yakınken oluşan dev oranları okunur tutar
+pctK(float x) =&gt;
+    na(x) ? &quot;–&quot; : math.abs(x) &gt; 999 ? (x &gt; 0 ? &quot;&gt;%+999&quot; : &quot;&lt;%−999&quot;) : pct(x)
+
+kategori(float s) =&gt;
+    na(s) ? &quot;–&quot; : s &gt;= 70 ? &quot;YÜKSEK&quot; : s &gt;= 55 ? &quot;İYİ&quot; : s &gt;= 40 ? &quot;ORTA&quot; : s &gt;= 25 ? &quot;ZAYIF&quot; : &quot;DÜŞÜK&quot;
+
+// ── Günlük veriden faktör girdileri ──
+gunluk() =&gt;
+    s50   = ta.sma(close, 50)
+    s200  = ta.sma(close, 200)
+    slope = (s50 - s50[20]) / ta.atr(14)
+    r126  = (close / close[126] - 1) * 100
+    r63   = (close / close[63] - 1) * 100
+    rsi   = ta.rsi(close, 14)
+    vola  = ta.stdev(math.log(close / close[1]), 126) * math.sqrt(252) * 100
+    dd    = (close / ta.highest(high, 126) - 1) * 100
+    [close, s50, s200, slope, r126, r63, rsi, vola, dd]
+
+// Para akışı hacim gerektirir; BIST&#x27;te hacim yalnız BIST_DLY: akışında var
+akis() =&gt;
+    v   = nz(volume)                                    // tek bir boş hacim günü 63 günlük toplamı boşaltmasın
+    upv = math.sum(close &gt; close[1] ? v : 0.0, 63)
+    dnv = math.sum(close &lt; close[1] ? v : 0.0, 63)
+    upv + dnv &gt; 0 ? upv / (upv + dnv) : float(na)
+
+volSym = str.startswith(syminfo.prefix, &quot;BIST&quot;) and iVolP != &quot;&quot; ? iVolP + syminfo.ticker : syminfo.tickerid   // BIST, BISTMIXED vb.
+
+[dC, d50, d200, dSlope, d126, d63, dRsi, dVola, dDd] = request.security(syminfo.tickerid, &quot;D&quot;, gunluk())
+dFlow = request.security(volSym, &quot;D&quot;, akis(), ignore_invalid_symbol = true)
+vol   = request.security(volSym, timeframe.period, volume, ignore_invalid_symbol = true)
+iR126 = request.security(iIdx, &quot;D&quot;, (close / close[126] - 1) * 100, ignore_invalid_symbol = true)
+
+// ── Faktör puanları (0–100) ──
+float sTrend = na
+if not na(d200)
+    sTrend := (dC &gt; d200 ? 40.0 : 0.0) + (d50 &gt; d200 ? 30.0 : 0.0) + (dSlope &gt; 0 ? 30.0 : 0.0)
+else if not na(d50)
+    sTrend := (dC &gt; d50 ? 50.0 : 0.0) + (dSlope &gt; 0 ? 50.0 : 0.0)
+
+m1   = lin(d126, -30, 40)
+m2   = lin(d63, -20, 25)
+sMom = na(m1) ? m2 : na(m2) ? m1 : (m1 + m2) / 2
+
+rel  = d126 - iR126
+sRel = lin(rel, -30, 30)
+
+float sRsi = na
+if not na(dRsi)
+    sRsi := dRsi &lt; 45 ? lin(dRsi, 25, 45) : dRsi &gt; 65 ? lin(dRsi, 85, 65) : 100.0
+
+sVol  = lin(dVola, 90, 25)
+sDd   = lin(dDd, -50, 0)
+sFlow = lin(dFlow, 0.35, 0.65)
+
+// ── Kârlılık: açıklanan çeyreklik HBK geçmişi ──
+eAct = request.earnings(syminfo.tickerid, earnings.actual, barmerge.gaps_on, ignore_invalid_symbol = true)
+eEst = request.earnings(syminfo.tickerid, earnings.estimate, barmerge.gaps_on, ignore_invalid_symbol = true)
+var epsHist = array.new&lt;float&gt;()
+if not na(eAct)
+    epsHist.push(eAct)
+
+float sEps   = na
+float epsSum = na
+float epsGr  = na
+nE = epsHist.size()
+if nE &gt;= 4
+    epsSum := 0.0
+    for i = nE - 4 to nE - 1
+        epsSum += epsHist.get(i)
+    if nE &gt;= 8
+        prev = 0.0
+        for i = nE - 8 to nE - 5
+            prev += epsHist.get(i)
+        epsGr := prev != 0 ? (epsSum - prev) / math.abs(prev) * 100 : na
+    else if nE &gt;= 5
+        old = epsHist.get(nE - 5)
+        epsGr := old != 0 ? (epsHist.last() - old) / math.abs(old) * 100 : na
+    sEps := (epsSum &gt; 0 ? 50.0 : 0.0) + (na(epsGr) ? 25.0 : lin(epsGr, -50, 50) / 2)
+else if nE &gt;= 1
+    sEps := epsHist.last() &gt; 0 ? 60.0 : 20.0
+
+// ── Haber listesini bir kez çözümle ──
+var nT   = array.new&lt;int&gt;()
+var nImp = array.new&lt;int&gt;()
+var nTxt = array.new&lt;string&gt;()
+if barstate.isfirst and str.length(iNews) &gt; 0
+    satirlar = str.split(str.replace_all(iNews, &quot;\r&quot;, &quot;&quot;), &quot;\n&quot;)
+    for ln in satirlar
+        parts = str.split(ln, &quot;|&quot;)
+        if parts.size() &gt;= 4
+            tk = str.upper(str.replace_all(parts.get(0), &quot; &quot;, &quot;&quot;))
+            if str.contains(tk, &quot;:&quot;)
+                tk := str.split(tk, &quot;:&quot;).last()
+            if tk == &quot;*&quot; or tk == str.upper(syminfo.ticker)
+                ds = str.replace_all(parts.get(1), &quot; &quot;, &quot;&quot;)
+                int y = na
+                int m = na
+                int d = na
+                if str.contains(ds, &quot;-&quot;)
+                    p = str.split(ds, &quot;-&quot;)
+                    if p.size() == 3
+                        y := int(str.tonumber(p.get(0)))
+                        m := int(str.tonumber(p.get(1)))
+                        d := int(str.tonumber(p.get(2)))
+                else if str.contains(ds, &quot;.&quot;)
+                    p = str.split(ds, &quot;.&quot;)
+                    if p.size() == 3
+                        d := int(str.tonumber(p.get(0)))
+                        m := int(str.tonumber(p.get(1)))
+                        y := int(str.tonumber(p.get(2)))
+                if not na(y) and not na(m) and not na(d)
+                    imp = str.replace_all(parts.get(2), &quot; &quot;, &quot;&quot;)
+                    nT.push(timestamp(syminfo.timezone, y, m, d, 0, 0))
+                    nImp.push(imp == &quot;+&quot; ? 1 : imp == &quot;-&quot; ? -1 : 0)
+                    nTxt.push(parts.get(3))
+
+// ── Haber etkisi: son 6 aydaki haberlerin net yönü ──
+SIX_M = 182 * 86400000
+float sNews = na
+int newsCnt = 0
+int newsNet = 0
+if nT.size() &gt; 0
+    for i = 0 to nT.size() - 1
+        t = nT.get(i)
+        if t &lt;= time_close and t &gt;= time - SIX_M
+            newsCnt += 1
+            newsNet += nImp.get(i)
+    if newsCnt &gt; 0
+        sNews := lin(newsNet, -3, 3)
+
+// ── Ağırlıklı toplam ──
+scores  = array.from(sTrend, sMom, sRel, sRsi, sVol, sDd, sFlow, sEps, sNews)
+weights = array.from(wTrend, wMom, wRel, wRsi, wVol, wDd, wFlow, wEps, wNews)
+float tot = 0.0
+float wsum = 0.0
+for i = 0 to 8
+    s = scores.get(i)
+    w = weights.get(i)
+    if not na(s) and w &gt; 0
+        tot += s * w
+        wsum += w
+score = wsum &gt; 0 ? tot / wsum : float(na)
+
+plot(score, &quot;Güven skoru&quot;, display = display.data_window)
+alertcondition(ta.crossover(score, 55), &quot;Güven skoru 55 üstüne çıktı&quot;, &quot;{{ticker}} güven skoru İYİ bölgesine geçti&quot;)
+alertcondition(ta.crossunder(score, 40), &quot;Güven skoru 40 altına indi&quot;, &quot;{{ticker}} güven skoru ZAYIF bölgesine indi&quot;)
+
+// ── Olay işaretleri ve tepki ölçümü ──
+volAvg    = ta.sma(vol, 20)
+reactVol  = ta.sma(vol, iReact + 1)
+prevClose = close[1]
+prevVol   = volAvg[1]
+prevTC    = time_close[1]
+
+var pLbl  = array.new&lt;label&gt;()
+var pBar  = array.new&lt;int&gt;()
+var pBase = array.new&lt;float&gt;()
+var pVol  = array.new&lt;float&gt;()
+var pTip  = array.new&lt;string&gt;()
+
+olay(string ch, color col, bool above, string tip, string txt) =&gt;
+    lb = label.new(bar_index, above ? high : low, txt == &quot;&quot; ? ch : ch + &quot; · &quot; + txt, yloc = above ? yloc.abovebar : yloc.belowbar, style = above ? label.style_label_down : label.style_label_up, color = col, textcolor = color.white, size = size.small, tooltip = tip + &quot;\n&quot; + str.tostring(iReact) + &quot; mumluk tepki ölçülüyor…&quot;)
+    pLbl.push(lb)
+    pBar.push(bar_index)
+    pBase.push(prevClose)
+    pVol.push(prevVol)
+    pTip.push(tip)
+
+tarih = str.format_time(time, &quot;dd.MM.yyyy&quot;, syminfo.timezone)
+
+if iShowEarn and not na(eAct)
+    olay(&quot;B&quot;, #2962ff, false, &quot;BİLANÇO · &quot; + tarih + &quot;\nHBK: &quot; + str.tostring(eAct, &quot;#.###&quot;) + (na(eEst) ? &quot;&quot; : &quot;  ·  beklenti &quot; + str.tostring(eEst, &quot;#.###&quot;)), &quot;&quot;)
+
+dv = request.dividends(syminfo.tickerid, dividends.gross, barmerge.gaps_on, ignore_invalid_symbol = true)
+if iShowDiv and not na(dv)
+    olay(&quot;T&quot;, #8e24aa, false, &quot;TEMETTÜ · &quot; + tarih + &quot;\nHisse başı brüt: &quot; + str.tostring(dv, &quot;#.####&quot;), &quot;&quot;)
+
+spN = request.splits(syminfo.tickerid, splits.numerator, barmerge.gaps_on, ignore_invalid_symbol = true)
+spD = request.splits(syminfo.tickerid, splits.denominator, barmerge.gaps_on, ignore_invalid_symbol = true)
+if iShowSpl and not na(spN)
+    olay(&quot;S&quot;, #f57c00, false, &quot;BÖLÜNME / BEDELSİZ · &quot; + tarih + &quot;\nOran: &quot; + str.tostring(spD) + &quot; → &quot; + str.tostring(spN), &quot;&quot;)
+
+if iShowNews and nT.size() &gt; 0
+    for i = 0 to nT.size() - 1
+        t = nT.get(i)
+        if t &lt;= time_close and t &gt; prevTC
+            v   = nImp.get(i)
+            col = v &gt; 0 ? #26a69a : v &lt; 0 ? #ef5350 : #787b86
+            etk = v &gt; 0 ? &quot;Olumlu&quot; : v &lt; 0 ? &quot;Olumsuz&quot; : &quot;Nötr&quot;
+            bas = nTxt.get(i)
+            kisa = str.length(bas) &gt; 40 ? str.substring(bas, 0, 40) + &quot;…&quot; : bas
+            olay(&quot;H&quot;, col, true, &quot;HABER · &quot; + str.format_time(t, &quot;dd.MM.yyyy&quot;, syminfo.timezone) + &quot; · &quot; + etk + &quot;\n&quot; + bas, iNewsTxt ? kisa : &quot;&quot;)
+
+// N mum dolduğunda tepkiyi etiketin açıklamasına yaz
+if pBar.size() &gt; 0
+    for i = pBar.size() - 1 to 0
+        if bar_index - pBar.get(i) &gt;= iReact
+            b0  = pBase.get(i)
+            v0  = pVol.get(i)
+            ret = b0 &gt; 0 ? (close / b0 - 1) * 100 : float(na)
+            vr  = v0 &gt; 0 ? reactVol / v0 : float(na)
+            pLbl.get(i).set_tooltip(pTip.get(i) + &quot;\n&quot; + str.tostring(iReact) + &quot; mumluk fiyat tepkisi: &quot; + pct(ret) + (na(vr) ? &quot;&quot; : &quot;  ·  hacim &quot; + str.tostring(vr, &quot;#.#&quot;) + &quot; kat&quot;))
+            pLbl.remove(i)
+            pBar.remove(i)
+            pBase.remove(i)
+            pVol.remove(i)
+            pTip.remove(i)
+
+// ── Skor tablosu ──
+tPos = switch iTPos
+    &quot;Sağ üst&quot; =&gt; position.top_right
+    &quot;Sağ alt&quot; =&gt; position.bottom_right
+    &quot;Sol alt&quot; =&gt; position.bottom_left
+    =&gt; position.top_left
+tSz = switch iTSize
+    &quot;Çok küçük&quot; =&gt; size.tiny
+    &quot;Normal&quot;    =&gt; size.normal
+    =&gt; size.small
+var tb = table.new(tPos, 4, 13, border_width = 1, border_color = color.new(color.gray, 80), frame_color = color.new(color.gray, 60), frame_width = 1)
+
+var bool imzaHazir = false
+
+satir(int r, string ad, string deger, float s, int w) =&gt;
+    fg = chart.fg_color
+    bg = chart.bg_color
+    sc = na(s) ? color.gray : color.from_gradient(s, 0, 100, #ef5350, #26a69a)
+    tb.cell(0, r, ad, text_color = fg, bgcolor = bg, text_halign = text.align_left, text_size = tSz)
+    tb.cell(1, r, deger, text_color = fg, bgcolor = bg, text_halign = text.align_left, text_size = tSz)
+    tb.cell(2, r, na(s) ? &quot;veri yok&quot; : str.tostring(math.round(s)), text_color = color.white, bgcolor = color.new(sc, 20), text_size = tSz)
+    tb.cell(3, r, str.tostring(w), text_color = fg, bgcolor = bg, text_size = tSz)
+
+if barstate.islast and iTable
+    fg = chart.fg_color
+    bg = chart.bg_color
+    tb.cell(0, 0, &quot;Faktör (6 ay)&quot;, text_color = fg, bgcolor = bg, text_size = tSz)
+    tb.cell(1, 0, &quot;Değer&quot;, text_color = fg, bgcolor = bg, text_size = tSz)
+    tb.cell(2, 0, &quot;Puan&quot;, text_color = fg, bgcolor = bg, text_size = tSz)
+    tb.cell(3, 0, &quot;Ağırlık&quot;, text_color = fg, bgcolor = bg, text_size = tSz)
+    satir(1, &quot;Trend yapısı&quot;, na(d200) ? &quot;200G ort. için veri az&quot; : (dC &gt; d200 ? &quot;200G üstü&quot; : &quot;200G altı&quot;) + (d50 &gt; d200 ? &quot; · 50G &gt; 200G&quot; : &quot; · 50G &lt; 200G&quot;), sTrend, wTrend)
+    satir(2, &quot;Momentum&quot;, &quot;6A &quot; + pct(d126) + &quot; · 3A &quot; + pct(d63), sMom, wMom)
+    satir(3, &quot;Endekse göre güç&quot;, pct(rel) + &quot; (endeks &quot; + pct(iR126) + &quot;)&quot;, sRel, wRel)
+    satir(4, &quot;RSI dengesi&quot;, &quot;RSI &quot; + str.tostring(dRsi, &quot;#.#&quot;), sRsi, wRsi)
+    satir(5, &quot;Oynaklık&quot;, &quot;yıllık %&quot; + str.tostring(dVola, &quot;#&quot;), sVol, wVol)
+    satir(6, &quot;Zirveden uzaklık&quot;, pct(dDd), sDd, wDd)
+    satir(7, &quot;Para akışı&quot;, na(dFlow) ? &quot;hacim yok&quot; : &quot;alış hacmi %&quot; + str.tostring(dFlow * 100, &quot;#&quot;), sFlow, wFlow)
+    satir(8, &quot;Kârlılık (HBK)&quot;, na(epsSum) ? (nE &gt; 0 ? &quot;son HBK &quot; + str.tostring(epsHist.last(), &quot;#.##&quot;) : &quot;bilanço verisi yok&quot;) : &quot;4Ç toplam &quot; + str.tostring(epsSum, &quot;#.##&quot;) + (na(epsGr) ? &quot;&quot; : &quot; · yıllık &quot; + pctK(epsGr)), sEps, wEps)
+    satir(9, &quot;Haber etkisi&quot;, newsCnt &gt; 0 ? str.tostring(newsCnt) + &quot; haber · net &quot; + (newsNet &gt; 0 ? &quot;+&quot; : &quot;&quot;) + str.tostring(newsNet) : &quot;listede haber yok&quot;, sNews, wNews)
+    sc = na(score) ? color.gray : color.from_gradient(score, 0, 100, #ef5350, #26a69a)
+    tb.cell(0, 10, &quot;GÜVEN SKORU&quot;, text_color = color.white, bgcolor = sc, text_size = size.normal)
+    tb.cell(1, 10, kategori(score), text_color = color.white, bgcolor = sc, text_size = size.normal)
+    tb.cell(2, 10, na(score) ? &quot;–&quot; : str.tostring(math.round(score)) + &quot; / 100&quot;, text_color = color.white, bgcolor = sc, text_size = size.normal)
+    d20 = score - score[20]
+    tb.cell(3, 10, na(d20) ? &quot;&quot; : (d20 &gt;= 0 ? &quot;▲ +&quot; : &quot;▼ &quot;) + str.tostring(d20, &quot;#&quot;) + &quot; / 20 mum&quot;, text_color = color.white, bgcolor = sc, text_size = tSz)
+    tb.cell(0, 11, &quot;Orta vade teknik + temel özet · yatırım tavsiyesi değildir&quot;, text_color = color.gray, bgcolor = bg, text_size = size.tiny)
+    tb.cell(0, 12, &quot;📸 Instagram · @umutkilicbalikesir&quot;, text_color = #E1306C, bgcolor = bg, text_size = tSz)
+    if not imzaHazir                                    // birleştirme yalnız bir kez (canlı mumda her tikte tekrar etmesin)
+        tb.merge_cells(0, 11, 3, 11)
+        tb.merge_cells(0, 12, 3, 12)
+        imzaHazir := true
+</code></pre></details>
+</section>
+
+<h2>Sık sorulan sorular</h2>
+<h3>BIST hisseleri için ücretsiz TradingView destek direnç göstergesi var mı?</h3><p>Evet. &#x27;UK · Otomatik Destek / Direnç&#x27; Pine Script göstergesi son 6 ayın tepe ve diplerinden destek ve direnç bölgelerini otomatik çizer. Ücretsiz ve açık kaynaktır.</p><h3>TradingView&#x27;de bir BIST hissesinin trendi yükselen mi düşen mi nasıl anlaşılır?</h3><p>&#x27;UK · Trend Yönü&#x27; göstergesi 7 ölçütü +1/0/−1 puanlar ve sonucu YÜKSELEN, DÜŞEN veya YATAY olarak tabloda gösterir.</p><h3>TradingView&#x27;de BIST hisselerinde hacim neden görünmüyor?</h3><p>BIST: ve BISTMIXED: akışlarında hacim verisi yoktur. Hacim 15 dakika gecikmeli BIST_DLY: akışında bulunur; &#x27;UK · Güven Skoru&#x27; göstergesi hacmi otomatik olarak oradan alır.</p><h3>Bilanço, temettü ve bedelsiz tarihleri TradingView grafiğinde nasıl gösterilir?</h3><p>&#x27;UK · Güven Skoru + Şirket Olayları&#x27; göstergesi bunları B, T ve S işaretleriyle gösterir ve olaydan sonraki fiyat ile hacim tepkisini ölçer.</p><h3>Bu göstergeler nasıl kurulur?</h3><p>TradingView&#x27;de Pine Editor&#x27;ü aç, yeni gösterge oluştur, .pine dosyasının içeriğini yapıştır, Kaydet ve Grafiğe ekle.</p>
+
+<h2>Kaynak</h2>
+<p>Kodlar ve güncellemeler: <a href="https://github.com/igumutkilicbalikesir/bist-tradingview-gostergeleri">https://github.com/igumutkilicbalikesir/bist-tradingview-gostergeleri</a></p>
+<p class="alt">Hazırlayan: <a href="https://www.instagram.com/umutkilicbalikesir/">Instagram @umutkilicbalikesir</a></p>
+</main>
+<script>
+function kopyala(id) {
+  const t = document.getElementById('kod-' + id).textContent;
+  navigator.clipboard.writeText(t).then(() => alert('Kod kopyalandı. TradingView Pine Editor\'e yapıştırın.'));
+}
+</script>
+</body></html>

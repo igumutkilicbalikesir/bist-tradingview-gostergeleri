@@ -1,0 +1,153 @@
+//@version=6
+// UK · Trend Yönü
+// Yedi bağımsız ölçütün her biri +1 (yükseliş), 0 (kararsız) ya da -1 (düşüş) verir.
+// Toplam puan eşiğin üstündeyse YÜKSELEN, eksi eşiğin altındaysa DÜŞEN, arada YATAY.
+// Ölçütler: EMA dizilimi, fiyatın 200 EMA'ya göre yeri, 50 EMA eğimi, tepe-dip yapısı,
+// SuperTrend, ADX/DMI ve üst zaman dilimi trendi. Her zaman diliminde çalışır.
+// Hazırlayan: Instagram @umutkilicbalikesir
+indicator("UK · Trend Yönü", shorttitle = "UK Trend", overlay = true, max_labels_count = 300)
+
+// ── Ayarlar ──
+G1 = "Ortalamalar"
+iFast   = input.int(20, "Hızlı EMA", minval = 2, group = G1)
+iMid    = input.int(50, "Orta EMA", minval = 5, group = G1)
+iSlow   = input.int(200, "Yavaş EMA", minval = 20, group = G1)
+iShowMA = input.bool(true, "Ortalamaları çiz", group = G1)
+
+G2 = "Ölçütler"
+iSwing  = input.int(5, "Tepe/dip genişliği", minval = 2, maxval = 20, group = G2)
+iStF    = input.float(3.0, "SuperTrend çarpanı", minval = 0.5, step = 0.1, group = G2)
+iStP    = input.int(10, "SuperTrend ATR süresi", minval = 1, group = G2)
+iAdxLen = input.int(14, "ADX süresi", minval = 2, group = G2)
+iAdxMin = input.float(20, "Trend sayılması için en az ADX", minval = 5, group = G2)
+iHtf    = input.timeframe("W", "Üst zaman dilimi", group = G2, tooltip = "Grafikten büyük bir zaman dilimi seçin. Günlük grafik için Haftalık (W), haftalık grafik için Aylık (M).")
+iThr    = input.int(3, "Trend eşiği (7 üzerinden)", minval = 1, maxval = 7, group = G2, tooltip = "Toplam puan bu değere ulaşırsa YÜKSELEN, eksi bu değere inerse DÜŞEN, arada YATAY.")
+
+G3 = "Görünüm"
+cUp    = input.color(#26a69a, "Yükselen", group = G3)
+cDn    = input.color(#ef5350, "Düşen", group = G3)
+cSide  = input.color(#9e9e9e, "Yatay", group = G3)
+iBg    = input.bool(true, "Arka planı trende göre boya", group = G3)
+iBar   = input.bool(false, "Mumları trende göre boya", group = G3)
+iLbl   = input.bool(true, "Trend değişimlerini etiketle", group = G3)
+iTable = input.bool(true, "Ölçüt tablosu", group = G3)
+iTPos  = input.string("Sağ alt", "Tablo konumu", options = ["Sağ üst", "Sağ alt", "Sol üst", "Sol alt"], group = G3)
+
+// ── 1) EMA dizilimi ──
+emaF = ta.ema(close, iFast)
+emaM = ta.ema(close, iMid)
+emaS = ta.ema(close, iSlow)
+c1 = emaF > emaM and emaM > emaS ? 1 : emaF < emaM and emaM < emaS ? -1 : 0
+
+// ── 2) Fiyat / yavaş EMA ──
+c2 = na(emaS) ? 0 : close > emaS ? 1 : -1
+
+// ── 3) Orta EMA eğimi (10 mumda ATR cinsinden) ──
+atr   = ta.atr(14)
+slope = (emaM - emaM[10]) / atr
+c3 = na(slope) ? 0 : slope > 0.5 ? 1 : slope < -0.5 ? -1 : 0
+
+// ── 4) Tepe-dip yapısı: yükselen tepe + yükselen dip ya da tersi; son tepe/dip kırılımı öncelikli ──
+ph = ta.pivothigh(high, iSwing, iSwing)
+pl = ta.pivotlow(low, iSwing, iSwing)
+var float ph1 = na
+var float ph2 = na
+var float pl1 = na
+var float pl2 = na
+if not na(ph)
+    ph2 := ph1
+    ph1 := ph
+if not na(pl)
+    pl2 := pl1
+    pl1 := pl
+c4 = 0
+if not na(ph2) and not na(pl2)
+    hh = ph1 > ph2
+    hl = pl1 > pl2
+    c4 := hh and hl ? 1 : not hh and not hl ? -1 : 0
+if not na(pl1) and close < pl1
+    c4 := -1
+if not na(ph1) and close > ph1
+    c4 := 1
+
+// ── 5) SuperTrend ──
+[st, stDir] = ta.supertrend(iStF, iStP)
+c5 = stDir < 0 ? 1 : -1
+
+// ── 6) ADX / DMI: trend gücü yetersizse 0 ──
+[diP, diM, adx] = ta.dmi(iAdxLen, iAdxLen)
+c6 = adx < iAdxMin ? 0 : diP > diM ? 1 : -1
+
+// ── 7) Üst zaman dilimi (kapanmış mumla, geriye dönük boyama yapmaz) ──
+htfDir() =>
+    e = ta.ema(close, 20)
+    close > e and e > e[1] ? 1 : close < e and e < e[1] ? -1 : 0
+c7 = nz(request.security(syminfo.tickerid, iHtf, htfDir()[1], lookahead = barmerge.lookahead_on))
+
+// ── Toplam ──
+score  = c1 + c2 + c3 + c4 + c5 + c6 + c7
+regime = score >= iThr ? 1 : score <= -iThr ? -1 : 0
+regCol = regime == 1 ? cUp : regime == -1 ? cDn : cSide
+var int regStart = na
+if na(regime[1]) or regime != regime[1]
+    regStart := bar_index
+
+plot(iShowMA ? emaF : na, "Hızlı EMA", color.new(#42a5f5, 20))
+plot(iShowMA ? emaM : na, "Orta EMA", color.new(#ffa726, 20))
+plot(iShowMA ? emaS : na, "Yavaş EMA", color.new(#ab47bc, 10), 2)
+plot(stDir < 0 ? st : na, "SuperTrend yukarı", cUp, 2, plot.style_linebr)
+plot(stDir > 0 ? st : na, "SuperTrend aşağı", cDn, 2, plot.style_linebr)
+bgcolor(iBg ? color.new(regCol, 92) : na, title = "Trend arka planı")
+barcolor(iBar ? regCol : na, title = "Trend mum rengi")
+
+if iLbl and not na(regime[1]) and regime != regime[1]
+    up = regime == 1
+    dn = regime == -1
+    label.new(bar_index, dn ? high : low, up ? "▲ YÜKSELEN" : dn ? "▼ DÜŞEN" : "◆ YATAY", yloc = dn ? yloc.abovebar : yloc.belowbar, style = dn ? label.style_label_down : label.style_label_up, color = regCol, textcolor = color.white, size = size.small)
+
+alertcondition(regime == 1 and regime[1] != 1, "Trend YÜKSELEN oldu", "{{ticker}} trendi YÜKSELEN'e döndü")
+alertcondition(regime == -1 and regime[1] != -1, "Trend DÜŞEN oldu", "{{ticker}} trendi DÜŞEN'e döndü")
+alertcondition(regime == 0 and regime[1] != 0, "Trend YATAY oldu", "{{ticker}} trendi YATAY'a döndü")
+
+// ── Tablo ──
+tPos = switch iTPos
+    "Sağ üst" => position.top_right
+    "Sol üst" => position.top_left
+    "Sol alt" => position.bottom_left
+    => position.bottom_right
+var tb = table.new(tPos, 3, 11, border_width = 1, border_color = color.new(color.gray, 80), frame_color = color.new(color.gray, 60), frame_width = 1)
+
+var bool imzaHazir = false
+
+puan(int v) =>
+    v > 0 ? "▲ +1" : v < 0 ? "▼ −1" : "• 0"
+renk(int v) =>
+    v > 0 ? cUp : v < 0 ? cDn : cSide
+yon(int v, string a, string b, string c) =>
+    v > 0 ? a : v < 0 ? b : c
+
+if barstate.islast and iTable
+    fg = chart.fg_color
+    bg = chart.bg_color
+    tb.cell(0, 0, "Ölçüt", text_color = fg, bgcolor = bg, text_size = size.small)
+    tb.cell(1, 0, "Durum", text_color = fg, bgcolor = bg, text_size = size.small)
+    tb.cell(2, 0, "Puan", text_color = fg, bgcolor = bg, text_size = size.small)
+    names = array.from("EMA dizilimi", "Fiyat / " + str.tostring(iSlow) + " EMA", str.tostring(iMid) + " EMA eğimi", "Tepe-dip yapısı", "SuperTrend", "ADX / DMI", "Üst zaman (" + iHtf + ")")
+    vals  = array.from(c1, c2, c3, c4, c5, c6, c7)
+    descs = array.from(yon(c1, str.format("{0} > {1} > {2}", iFast, iMid, iSlow), str.format("{0} < {1} < {2}", iFast, iMid, iSlow), "karışık"), yon(c2, "üstünde", "altında", "veri yok"), yon(c3, "yukarı", "aşağı", "yatay"), yon(c4, "yükselen tepe ve dip", "alçalan tepe ve dip", "karışık"), yon(c5, "yukarı", "aşağı", "–"), "ADX " + str.tostring(adx, "#") + yon(c6, " · alıcı güçlü", " · satıcı güçlü", " · trend zayıf"), yon(c7, "yukarı", "aşağı", "yatay"))
+    for i = 0 to 6
+        v = vals.get(i)
+        tb.cell(0, i + 1, names.get(i), text_color = fg, bgcolor = bg, text_halign = text.align_left, text_size = size.small)
+        tb.cell(1, i + 1, descs.get(i), text_color = fg, bgcolor = bg, text_halign = text.align_left, text_size = size.small)
+        tb.cell(2, i + 1, puan(v), text_color = color.white, bgcolor = color.new(renk(v), 25), text_size = size.small)
+    rTxt = regime == 1 ? "YÜKSELEN" : regime == -1 ? "DÜŞEN" : "YATAY"
+    tb.cell(0, 8, "TREND", text_color = color.white, bgcolor = regCol, text_size = size.normal)
+    tb.cell(1, 8, rTxt + " · güç %" + str.tostring(math.abs(score) / 7.0 * 100, "#"), text_color = color.white, bgcolor = regCol, text_size = size.normal)
+    tb.cell(2, 8, (score > 0 ? "+" : "") + str.tostring(score) + " / 7", text_color = color.white, bgcolor = regCol, text_size = size.normal)
+    tb.cell(0, 9, "Süre", text_color = fg, bgcolor = bg, text_size = size.small)
+    tb.cell(1, 9, str.tostring(bar_index - regStart) + " mumdur " + rTxt, text_color = fg, bgcolor = bg, text_halign = text.align_left, text_size = size.small)
+    tb.cell(2, 9, "", bgcolor = bg)
+    tb.cell(0, 10, "📸 Instagram · @umutkilicbalikesir", text_color = #E1306C, bgcolor = bg, text_size = size.small)
+    if not imzaHazir
+        tb.merge_cells(0, 10, 2, 10)
+        imzaHazir := true

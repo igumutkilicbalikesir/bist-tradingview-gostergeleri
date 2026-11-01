@@ -1,0 +1,236 @@
+//@version=6
+// UK · Otomatik Destek / Direnç
+// Seçilen dönemdeki (varsayılan 6 ay) tepe ve dipleri bulur, birbirine yakın olanları ATR'ye göre
+// bölgelere toplar, fiyata en yakın ve en az iki kez test edilmiş bölgeleri grafikte kutu olarak çizer.
+// Her zaman diliminde çalışır: bölge kalınlığı grafiğin oynaklığına (ATR) göre kendini ayarlar.
+// Hazırlayan: Instagram @umutkilicbalikesir
+indicator("UK · Otomatik Destek / Direnç", shorttitle = "UK D/D", overlay = true, max_boxes_count = 60, max_lines_count = 10, max_labels_count = 10, max_bars_back = 5000)
+
+// ── Ayarlar ──
+G1 = "Hesaplama"
+iMonths  = input.int(6, "Dönem (ay)", minval = 1, maxval = 36, group = G1, tooltip = "Seviyeler bu süredeki tepe ve diplerden çıkarılır. Orta vade için 6 ay.")
+iPivot   = input.int(0, "Tepe/dip genişliği (0 = otomatik)", minval = 0, maxval = 30, group = G1, tooltip = "Bir mumun tepe sayılması için sağında ve solunda kaç mumun daha alçak olması gerektiği. Otomatik: haftalık/aylık grafikte 2, diğerlerinde 5.")
+iAtrMult = input.float(0.6, "Bölge kalınlığı (ATR katı)", minval = 0.1, maxval = 3.0, step = 0.1, group = G1, tooltip = "Aralarındaki fark bu mesafeden az olan tepe ve dipler tek bölgede birleşir.")
+iMinHit  = input.int(2, "En az temas", minval = 1, maxval = 10, group = G1, tooltip = "Bir bölgenin çizilmesi için kaç kez test edilmiş olması gerektiği.")
+iCount   = input.int(3, "Her yönde seviye sayısı", minval = 1, maxval = 8, group = G1)
+iExtreme = input.bool(true, "Dönem zirvesi ve dibini çiz", group = G1)
+
+G2 = "Görünüm"
+cSup   = input.color(#26a69a, "Destek", group = G2)
+cRes   = input.color(#ef5350, "Direnç", group = G2)
+iFill  = input.int(82, "Dolgu saydamlığı", minval = 0, maxval = 100, group = G2)
+iExt   = input.int(20, "Sağa uzatma (mum)", minval = 0, maxval = 300, group = G2)
+iTable = input.bool(true, "Seviye tablosu", group = G2)
+iTPos  = input.string("Sol alt", "Tablo konumu", options = ["Sağ üst", "Sağ alt", "Sol üst", "Sol alt"], group = G2)
+
+// ── Tepe ve dipleri topla ──
+pw     = iPivot > 0 ? iPivot : (timeframe.isweekly or timeframe.ismonthly ? 2 : 5)
+atr    = ta.atr(14)
+ph     = ta.pivothigh(high, pw, pw)
+pl     = ta.pivotlow(low, pw, pw)
+startT = time - int(iMonths * 30.44 * 86400000.0)
+
+var pvP = array.new<float>()
+var pvT = array.new<int>()
+var pvB = array.new<int>()
+if not na(ph)
+    pvP.push(ph)
+    pvT.push(time[pw])
+    pvB.push(bar_index - pw)
+if not na(pl)
+    pvP.push(pl)
+    pvT.push(time[pw])
+    pvB.push(bar_index - pw)
+while pvT.size() > 0 and pvT.first() < startT
+    pvP.shift()
+    pvT.shift()
+    pvB.shift()
+
+// Bir kümeyi bölge olarak kaydeder; tek dokunuşlu bölgeler en az çeyrek tolerans kalınlığında çizilir
+addZone(array<float> mids, array<float> tops, array<float> bots, array<int> hits, array<int> lefts, float lo, float hi, int n, int left, float tol) =>
+    mid  = (lo + hi) / 2
+    half = math.max((hi - lo) / 2, tol * 0.25)
+    mids.push(mid)
+    tops.push(mid + half)
+    bots.push(mid - half)
+    hits.push(n)
+    lefts.push(left)
+
+pct(float x) =>
+    na(x) ? "–" : "%" + (x >= 0 ? "+" : "") + str.tostring(x, "#.#")
+
+tPos = switch iTPos
+    "Sağ alt" => position.bottom_right
+    "Sol üst" => position.top_left
+    "Sol alt" => position.bottom_left
+    => position.top_right
+
+var tbl     = table.new(tPos, 3, 22, border_width = 1, border_color = color.new(color.gray, 80), frame_color = color.new(color.gray, 60), frame_width = 1)
+var boxes   = array.new<box>()
+var lns     = array.new<line>()
+var lbls    = array.new<label>()
+var float confSup = na
+var float confRes = na
+var bool imzaHazir = false
+
+if barstate.islast
+    // Kapanışta bir önceki mumun seviyeleri kırıldıysa alarm
+    if barstate.isconfirmed
+        if not na(confSup) and close < confSup
+            alert(syminfo.ticker + " desteği aşağı kırdı: " + str.tostring(confSup, format.mintick), alert.freq_once_per_bar_close)
+        if not na(confRes) and close > confRes
+            alert(syminfo.ticker + " direnci yukarı geçti: " + str.tostring(confRes, format.mintick), alert.freq_once_per_bar_close)
+
+    for b in boxes
+        b.delete()
+    boxes.clear()
+    for l in lns
+        l.delete()
+    lns.clear()
+    for lb in lbls
+        lb.delete()
+    lbls.clear()
+
+    // ── Kümeleme: fiyata göre sıralanmış tepe/dipler tolerans içinde birleşir ──
+    tol   = atr * iAtrMult
+    zMid  = array.new<float>()
+    zTop  = array.new<float>()
+    zBot  = array.new<float>()
+    zHit  = array.new<int>()
+    zLeft = array.new<int>()
+    n = pvP.size()
+    if n > 0
+        ord = pvP.sort_indices(order.ascending)
+        float cLo = na
+        float cHi = na
+        int cN = 0
+        int cL = 0
+        for i = 0 to n - 1
+            k = ord.get(i)
+            p = pvP.get(k)
+            if cN > 0 and p - cLo <= tol
+                cHi := p
+                cN += 1
+                cL := math.min(cL, pvB.get(k))
+            else
+                if cN >= iMinHit
+                    addZone(zMid, zTop, zBot, zHit, zLeft, cLo, cHi, cN, cL, tol)
+                cLo := p
+                cHi := p
+                cN := 1
+                cL := pvB.get(k)
+        if cN >= iMinHit
+            addZone(zMid, zTop, zBot, zHit, zLeft, cLo, cHi, cN, cL, tol)
+
+    // ── Fiyatın altı destek, üstü direnç; her yönde en yakın N bölge ──
+    supI = array.new<int>()
+    supD = array.new<float>()
+    resI = array.new<int>()
+    resD = array.new<float>()
+    zn = zMid.size()
+    if zn > 0
+        for j = 0 to zn - 1
+            m = zMid.get(j)
+            if m < close
+                supI.push(j)
+                supD.push(close - m)
+            else
+                resI.push(j)
+                resD.push(m - close)
+
+    tbl.clear(0, 0, 2, 20)
+    txtC = chart.fg_color
+    bgC  = color.new(chart.bg_color, 0)
+    if iTable
+        tbl.cell(0, 0, "Seviye", text_color = txtC, bgcolor = bgC, text_size = size.small)
+        tbl.cell(1, 0, "Bölge", text_color = txtC, bgcolor = bgC, text_size = size.small)
+        tbl.cell(2, 0, "Uzaklık", text_color = txtC, bgcolor = bgC, text_size = size.small)
+
+    rCount = math.min(iCount, resI.size())
+    sCount = math.min(iCount, supI.size())
+    confRes := na
+    confSup := na
+
+    if rCount > 0
+        rOrd = resD.sort_indices(order.ascending)
+        for r = 0 to rCount - 1
+            j   = resI.get(rOrd.get(r))
+            m   = zMid.get(j)
+            txt = "Direnç " + str.tostring(r + 1) + " · " + str.tostring(m, format.mintick) + " · " + str.tostring(zHit.get(j)) + " temas"
+            boxes.push(box.new(zLeft.get(j), zTop.get(j), bar_index + iExt, zBot.get(j), border_color = color.new(cRes, 40), bgcolor = color.new(cRes, iFill), text = txt, text_size = size.small, text_color = cRes, text_halign = text.align_right, text_valign = text.align_center))
+            if r == 0 and barstate.isconfirmed
+                confRes := zTop.get(j)
+            if iTable
+                row = 1 + (rCount - 1 - r)
+                tbl.cell(0, row, "Direnç " + str.tostring(r + 1), text_color = color.white, bgcolor = color.new(cRes, 30), text_size = size.small)
+                tbl.cell(1, row, str.tostring(zBot.get(j), format.mintick) + " – " + str.tostring(zTop.get(j), format.mintick), text_color = txtC, bgcolor = bgC, text_size = size.small)
+                tbl.cell(2, row, pct((m / close - 1) * 100), text_color = txtC, bgcolor = bgC, text_size = size.small)
+
+    priceRow = 1 + rCount
+    if iTable
+        tbl.cell(0, priceRow, "Fiyat", text_color = txtC, bgcolor = color.new(color.gray, 70), text_size = size.small)
+        tbl.cell(1, priceRow, str.tostring(close, format.mintick), text_color = txtC, bgcolor = color.new(color.gray, 70), text_size = size.small)
+        tbl.cell(2, priceRow, "", bgcolor = color.new(color.gray, 70))
+
+    if sCount > 0
+        sOrd = supD.sort_indices(order.ascending)
+        for s = 0 to sCount - 1
+            j   = supI.get(sOrd.get(s))
+            m   = zMid.get(j)
+            txt = "Destek " + str.tostring(s + 1) + " · " + str.tostring(m, format.mintick) + " · " + str.tostring(zHit.get(j)) + " temas"
+            boxes.push(box.new(zLeft.get(j), zTop.get(j), bar_index + iExt, zBot.get(j), border_color = color.new(cSup, 40), bgcolor = color.new(cSup, iFill), text = txt, text_size = size.small, text_color = cSup, text_halign = text.align_right, text_valign = text.align_center))
+            if s == 0 and barstate.isconfirmed
+                confSup := zBot.get(j)
+            if iTable
+                row = priceRow + 1 + s
+                tbl.cell(0, row, "Destek " + str.tostring(s + 1), text_color = color.white, bgcolor = color.new(cSup, 30), text_size = size.small)
+                tbl.cell(1, row, str.tostring(zBot.get(j), format.mintick) + " – " + str.tostring(zTop.get(j), format.mintick), text_color = txtC, bgcolor = bgC, text_size = size.small)
+                tbl.cell(2, row, pct((m / close - 1) * 100), text_color = txtC, bgcolor = bgC, text_size = size.small)
+
+    // ── Risk / ödül: en yakın dirence kalan yol ÷ en yakın desteğe kalan yol ──
+    rrRow = priceRow + sCount + 1
+    if iTable and rCount > 0 and sCount > 0
+        up = zMid.get(resI.get(resD.sort_indices(order.ascending).get(0))) - close
+        dn = close - zMid.get(supI.get(supD.sort_indices(order.ascending).get(0)))
+        rr = dn > 0 ? up / dn : float(na)
+        tbl.cell(0, rrRow, "Ödül / risk", text_color = txtC, bgcolor = bgC, text_size = size.small)
+        tbl.cell(1, rrRow, na(rr) ? "–" : str.tostring(rr, "#.##") + " kat", text_color = na(rr) ? txtC : rr >= 2 ? cSup : rr < 1 ? cRes : txtC, bgcolor = bgC, text_size = size.small)
+        tbl.cell(2, rrRow, "D1 → R1", text_color = txtC, bgcolor = bgC, text_size = size.small)
+
+    // ── Dönem zirvesi ve dibi ──
+    if iExtreme
+        float pHi = na
+        float pLo = na
+        int bHi = na
+        int bLo = na
+        for i = 0 to math.min(bar_index, 4999)
+            if time[i] < startT
+                break
+            if na(pHi) or high[i] > pHi
+                pHi := high[i]
+                bHi := bar_index - i
+            if na(pLo) or low[i] < pLo
+                pLo := low[i]
+                bLo := bar_index - i
+        lastRow = rrRow + 1
+        if not na(pHi)
+            lns.push(line.new(bHi, pHi, bar_index + iExt, pHi, color = color.new(cRes, 20), style = line.style_dashed))
+            lbls.push(label.new(bar_index + iExt, pHi, str.tostring(iMonths) + " ay zirve · " + str.tostring(pHi, format.mintick), style = label.style_label_left, color = color.new(color.white, 100), textcolor = cRes, size = size.small))
+            if iTable
+                tbl.cell(0, lastRow, str.tostring(iMonths) + " ay zirve", text_color = cRes, bgcolor = bgC, text_size = size.small)
+                tbl.cell(1, lastRow, str.tostring(pHi, format.mintick), text_color = txtC, bgcolor = bgC, text_size = size.small)
+                tbl.cell(2, lastRow, pct((pHi / close - 1) * 100), text_color = txtC, bgcolor = bgC, text_size = size.small)
+        if not na(pLo)
+            lns.push(line.new(bLo, pLo, bar_index + iExt, pLo, color = color.new(cSup, 20), style = line.style_dashed))
+            lbls.push(label.new(bar_index + iExt, pLo, str.tostring(iMonths) + " ay dip · " + str.tostring(pLo, format.mintick), style = label.style_label_left, color = color.new(color.white, 100), textcolor = cSup, size = size.small))
+            if iTable
+                tbl.cell(0, lastRow + 1, str.tostring(iMonths) + " ay dip", text_color = cSup, bgcolor = bgC, text_size = size.small)
+                tbl.cell(1, lastRow + 1, str.tostring(pLo, format.mintick), text_color = txtC, bgcolor = bgC, text_size = size.small)
+                tbl.cell(2, lastRow + 1, pct((pLo / close - 1) * 100), text_color = txtC, bgcolor = bgC, text_size = size.small)
+
+    // ── İmza: tablonun en alt satırı (boş satırlar çizilmez) ──
+    if iTable
+        tbl.cell(0, 21, "📸 Instagram · @umutkilicbalikesir", text_color = #E1306C, bgcolor = bgC, text_size = size.small)
+        if not imzaHazir
+            tbl.merge_cells(0, 21, 2, 21)
+            imzaHazir := true
